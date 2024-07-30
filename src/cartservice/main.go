@@ -25,18 +25,17 @@ func main() {
 
 	// This is how you set up a basic Echo router
 	echoRouter := echo.New()
-	echoApiRouter := echoRouter.Group(pathToApiGroup)
-	echoApiRouter.Use(middleware.Logger())
+	echoRouter.Use(middleware.Logger())
 
 	// CORS configuration
-	echoApiRouter.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+	echoRouter.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: defaultCORSOrigins,
 		AllowHeaders: defaultCORSHeaders,
 	}))
 
 	server := NewServer()
 
-	cartservice_server_rest_server.RegisterHandlers(echoApiRouter, cartservice_server_rest_server.NewStrictHandler(server, nil))
+	cartservice_server_rest_server.RegisterHandlers(echoRouter, cartservice_server_rest_server.NewStrictHandler(server, nil))
 
 	echoRouter.Start(net.JoinHostPort(restAPIHostIP, fmt.Sprint(restAPIPortAddr)))
 }

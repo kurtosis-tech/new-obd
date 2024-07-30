@@ -15,7 +15,9 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	cartservice_rest_client "github.com/kurtosis-tech/new-obd/src/cartservice/api/http_rest/client"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/runtime/protoimpl"
 	"html/template"
@@ -102,6 +104,17 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 		renderHTTPError(log, r, w, errors.Wrap(err, "could not retrieve cart"), http.StatusInternalServerError)
 		return
 	}*/
+
+	cartServiceClient, err := cartservice_rest_client.NewClient("http://localhost:8090", cartservice_rest_client.WithHTTPClient(&http.Client{}))
+	if err != nil {
+		logrus.Error(err)
+	}
+
+	response, err := cartServiceClient.GetCartUserId(context.Background(), "2020")
+	if err != nil {
+		logrus.Error(err)
+	}
+	logrus.Debugf("[LEO-DEBUG] %s", response.Status)
 
 	type productView struct {
 		Item  *Product
