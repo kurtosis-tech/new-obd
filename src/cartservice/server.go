@@ -11,8 +11,8 @@ type Server struct {
 	Store cartstore.CartStore
 }
 
-func NewServer() Server {
-	return Server{}
+func NewServer(store cartstore.CartStore) Server {
+	return Server{Store: store}
 }
 
 func (s Server) PostCart(ctx context.Context, object cartservice_server_rest_server.PostCartRequestObject) (cartservice_server_rest_server.PostCartResponseObject, error) {

@@ -15,9 +15,7 @@
 package main
 
 import (
-	"context"
 	"fmt"
-	cartservice_rest_client "github.com/kurtosis-tech/new-obd/src/cartservice/api/http_rest/client"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/runtime/protoimpl"
 	"html/template"
@@ -105,7 +103,7 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}*/
 
-	cartServiceClient, err := cartservice_rest_client.NewClient("http://localhost:8090", cartservice_rest_client.WithHTTPClient(&http.Client{}))
+	/*cartServiceClient, err := cartservice_rest_client.NewClient("http://localhost:8090", cartservice_rest_client.WithHTTPClient(&http.Client{}))
 	if err != nil {
 		logrus.Error(err)
 	}
@@ -114,7 +112,7 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logrus.Error(err)
 	}
-	logrus.Debugf("[LEO-DEBUG] %s", response.Status)
+	logrus.Debugf("[LEO-DEBUG] %s", response.Status)*/
 
 	type productView struct {
 		Item  *Product
