@@ -10,7 +10,7 @@ require (
 	github.com/kurtosis-tech/online-boutique-demo/src/currencyexternalapi v0.0.0-20240729190836-e99f63c9b42e
 	github.com/sirupsen/logrus v1.7.0
 	go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux v0.36.3
-	google.golang.org/protobuf v1.27.1
+	google.golang.org/protobuf v1.33.0
 )
 
 require (
