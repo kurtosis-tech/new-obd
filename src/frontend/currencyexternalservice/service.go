@@ -2,9 +2,7 @@ package currencyexternalservice
 
 import (
 	"context"
-	fep "github.com/kurtosis-tech/online-boutique-demo/frontend/proto"
 	"github.com/kurtosis-tech/online-boutique-demo/src/currencyexternalapi"
-	"go-micro.dev/v4/client"
 )
 
 type Service struct {
@@ -16,7 +14,7 @@ func NewService(primaryApi *currencyexternalapi.CurrencyAPI, secondaryApi *curre
 	return &Service{primaryApi: primaryApi, secondaryApi: secondaryApi}
 }
 
-func (s *Service) GetSupportedCurrencies(ctx context.Context, _ *fep.Empty, _ ...client.CallOption) (*fep.GetSupportedCurrenciesResponse, error) {
+func (s *Service) GetSupportedCurrencies(ctx context.Context) ([]string, error) {
 
 	var (
 		currencyCodes []string
@@ -31,14 +29,11 @@ func (s *Service) GetSupportedCurrencies(ctx context.Context, _ *fep.Empty, _ ..
 		}
 	}
 
-	response := &fep.GetSupportedCurrenciesResponse{
-		CurrencyCodes: currencyCodes,
-	}
-
-	return response, nil
+	return currencyCodes, nil
 }
 
-func (s *Service) Convert(ctx context.Context, in *fep.CurrencyConversionRequest, _ ...client.CallOption) (*fep.Money, error) {
+/*
+func (s *Service) Convert(ctx context.Context, fromCode string, fromUnits int64, fromNanos int32, to string) (*fep.Money, error) {
 
 	var (
 		money = &fep.Money{}
@@ -62,3 +57,4 @@ func (s *Service) Convert(ctx context.Context, in *fep.CurrencyConversionRequest
 
 	return money, nil
 }
+*/
