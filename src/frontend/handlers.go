@@ -49,11 +49,7 @@ var (
 	plat platformDetails
 )
 
-var validEnvs = []string{"local", "gcp", "azure", "aws", "onprem", "alibaba"}
-
 func (fe *frontendServer) homeHandler(w http.ResponseWriter, r *http.Request) {
-	//log := r.Context().Value(ctxKeyLog{}).(logrus.FieldLogger)//TODO fix
-	//log.WithField("currency", currentCurrency(r)).Info("home")
 
 	currencies, err := fe.currencyService.GetSupportedCurrencies(r.Context())
 	if err != nil {
@@ -115,16 +111,6 @@ func (fe *frontendServer) homeHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (fe *frontendServer) productHandler(w http.ResponseWriter, r *http.Request) {
-	/*log := r.Context().Value(ctxKeyLog{}).(logrus.FieldLogger)
-	id := mux.Vars(r)["id"]
-	if id == "" {
-		renderHTTPError(log, r, w, errors.New("product id not specified"), http.StatusBadRequest)
-		return
-	}
-	log.WithField("id", id).WithField("currency", currentCurrency(r)).
-		Debug("serving product page")
-	*/
-
 	id := mux.Vars(r)["id"]
 	if id == "" {
 		renderHTTPError(r, w, errors.New("product id not specified"), http.StatusBadRequest)
@@ -186,14 +172,12 @@ func (fe *frontendServer) productHandler(w http.ResponseWriter, r *http.Request)
 }
 
 func (fe *frontendServer) addToCartHandler(w http.ResponseWriter, r *http.Request) {
-	//log := r.Context().Value(ctxKeyLog{}).(logrus.FieldLogger)
 	quantity, _ := strconv.ParseUint(r.FormValue("quantity"), 10, 32)
 	productID := r.FormValue("product_id")
 	if productID == "" || quantity == 0 {
 		renderHTTPError(r, w, errors.New("invalid form input"), http.StatusBadRequest)
 		return
 	}
-	//log.WithField("product", productID).WithField("quantity", quantity).Debug("adding to cart")
 
 	setKardinalReqEditorFcn := getSetTraceIdHeaderRequestEditorFcn(r)
 
@@ -226,9 +210,6 @@ func (fe *frontendServer) addToCartHandler(w http.ResponseWriter, r *http.Reques
 }
 
 func (fe *frontendServer) emptyCartHandler(w http.ResponseWriter, r *http.Request) {
-	//log := r.Context().Value(ctxKeyLog{}).(logrus.FieldLogger)
-	//log.Debug("emptying cart")
-
 	setKardinalReqEditorFcn := getSetTraceIdHeaderRequestEditorFcn(r)
 
 	userId := sessionID(r)
@@ -405,15 +386,6 @@ func renderCurrencyLogo(currencyCode string) string {
 		logo = val
 	}
 	return logo
-}
-
-func stringinSlice(slice []string, val string) bool {
-	for _, item := range slice {
-		if item == val {
-			return true
-		}
-	}
-	return false
 }
 
 func renderHTTPError(r *http.Request, w http.ResponseWriter, err error, code int) {

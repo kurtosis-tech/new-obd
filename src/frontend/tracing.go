@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-func myTracingContextWrapper(next http.Handler) http.Handler {
+func KardinalTracingContextWrapper(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		traceIdFrom := r.Header.Get(consts.KardinalTraceIdHeaderKey)

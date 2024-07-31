@@ -104,7 +104,7 @@ func main() {
 	handler = ensureSessionID(handler)             // add session ID
 	// handler = tracing(handler)                     // add opentelemetry instrumentation
 	//r.Use(otelmux.Middleware(name))
-	r.Use(myTracingContextWrapper)
+	r.Use(KardinalTracingContextWrapper)
 
 	// Start the server
 	http.Handle("/", r)
