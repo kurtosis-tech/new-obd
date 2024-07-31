@@ -20,41 +20,27 @@ minikube addons enable ingress
 127.0.0.1 dev.app.localhost
 ```
 
-
 3. Install Istio resources in the local cluster
 
 ```bash
 istioctl install --set profile=default -y
 ```
 
-4. Create prod namespace and add Istio injection label
-
-```bash
-kubectl create namespace prod
-kubectl label namespace prod istio-injection=enabled
-```
-
-5. Deploy the Go Micro engine with kubectl
-
-```bash
-kubectl apply -f ./release/gomicro.yaml
-```
-
-6. Deploy Kardinal Manager in the local cluster
+4. Deploy Kardinal Manager in the local cluster
 
 ```bash
 kardinal manager deploy local-minikube
 ```
 
-7. Deploy the online boutique app with Kardinal
+5. Deploy the online boutique app with Kardinal
 
 ```bash
-kardinal deploy --k8s-manifest ./release/ob-kardinal.yaml
+kardinal deploy --k8s-manifest ./release/obd-kardinal.yaml
 ```
 
-8. Start the tunnel to access the services (you may have to provide you password for the underlying sudo access)
+6. Start the tunnel to access the services (you may have to provide you password for the underlying sudo access)
 ```bash
 minikube tunnel
 ```
 
-9. Open the [production page](http://prod.app.localhost/) in the browser to see the production online boutique
+7. Open the [production page](http://prod.app.localhost/) in the browser to see the production online boutique
