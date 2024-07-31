@@ -9,8 +9,8 @@ import (
 func KardinalTracingContextWrapper(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-		traceIdFrom := r.Header.Get(consts.KardinalTraceIdHeaderKey)
-		logrus.Infof("[KARDINAL-DEBUG] traceIdFrom: %s", traceIdFrom)
+		traceID := r.Header.Get(consts.KardinalTraceIdHeaderKey)
+		logrus.Infof("[KARDINAL-DEBUG] Trace ID: %s", traceID)
 
 		next.ServeHTTP(w, r)
 	})

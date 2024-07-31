@@ -12,7 +12,6 @@ import (
 )
 
 const (
-	pathToApiGroup         = "/api"
 	restAPIPortAddr uint16 = 8090
 	restAPIHostIP   string = "0.0.0.0"
 )
@@ -29,7 +28,7 @@ func main() {
 	echoRouter := echo.New()
 	echoRouter.Use(middleware.Logger())
 
-	echoRouter.Use(TraceIDMiddleware)
+	echoRouter.Use(KardinalTraceIDMiddleware)
 
 	// CORS configuration
 	echoRouter.Use(middleware.CORSWithConfig(middleware.CORSConfig{
