@@ -15,9 +15,11 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"github.com/gorilla/mux"
 	cartservice_rest_types "github.com/kurtosis-tech/new-obd/src/cartservice/api/http_rest/types"
+	"github.com/kurtosis-tech/new-obd/src/frontend/consts"
 	"github.com/kurtosis-tech/new-obd/src/frontend/money"
 	productcatalogservice_rest_types "github.com/kurtosis-tech/new-obd/src/productcatalogservice/api/http_rest/types"
 	"github.com/pkg/errors"
@@ -59,14 +61,16 @@ func (fe *frontendServer) homeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	productResponse, err := fe.productCatalogService.GetProductsWithResponse(r.Context())
+	setKardinalReqEditorFcn := getSetTraceIdHeaderRequestEditorFcn(r)
+
+	productResponse, err := fe.productCatalogService.GetProductsWithResponse(r.Context(), setKardinalReqEditorFcn)
 	if err != nil {
 		renderHTTPError(r, w, errors.Wrapf(err, "could not retrieve products"), http.StatusInternalServerError)
 		return
 	}
 	productsList := productResponse.JSON200
 
-	cartResponse, err := fe.cartService.GetCartUserIdWithResponse(r.Context(), sessionID(r))
+	cartResponse, err := fe.cartService.GetCartUserIdWithResponse(r.Context(), sessionID(r), setKardinalReqEditorFcn)
 	if err != nil {
 		renderHTTPError(r, w, errors.Wrap(err, "could not retrieve cart"), http.StatusInternalServerError)
 		return
@@ -428,4 +432,16 @@ func cartSize(c []cartservice_rest_types.CartItem) int {
 		cartSize += int(*item.Quantity)
 	}
 	return cartSize
+}
+
+func getSetTraceIdHeaderRequestEditorFcn(upsTreamRequest *http.Request) func(ctx context.Context, req *http.Request) error {
+
+	traceID := upsTreamRequest.Header.Get(consts.KardinalTraceIdHeaderKey)
+
+	var setKardinalReqEditorFcn = func(ctx context.Context, req *http.Request) error {
+		req.Header.Set(consts.KardinalTraceIdHeaderKey, traceID)
+		return nil
+	}
+
+	return setKardinalReqEditorFcn
 }
