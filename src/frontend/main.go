@@ -11,7 +11,6 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
-	"go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux"
 )
 
 const (
@@ -104,7 +103,7 @@ func main() {
 	handler = &logHandler{log: log, next: handler} // add logging
 	handler = ensureSessionID(handler)             // add session ID
 	// handler = tracing(handler)                     // add opentelemetry instrumentation
-	r.Use(otelmux.Middleware(name))
+	//r.Use(otelmux.Middleware(name))
 	r.Use(myTracingContextWrapper)
 
 	// Start the server

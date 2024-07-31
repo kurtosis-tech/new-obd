@@ -12,7 +12,7 @@ func myTracingContextWrapper(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		traceIdFrom := r.Header.Get("X-Kardinal-Trace-Id")
-		logrus.Infof("[LEO-DEBUG] traceIdFrom: %s", traceIdFrom)
+		logrus.Infof("[KARDINAL-DEBUG] traceIdFrom: %s", traceIdFrom)
 
 	})
 }
@@ -25,9 +25,9 @@ func TraceIDMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 
 		// Log the trace ID
 		if traceID != "" {
-			logrus.Infof("[LEO-DEBUG] traceIdFrom: %s", traceID)
+			logrus.Infof("[KARDINAL-DEBUG] traceIdFrom: %s", traceID)
 		} else {
-			log.Println("[LEO-DEBUG] Trace ID: not provided")
+			log.Println("[KARDINAL-DEBUG] Trace ID: not provided")
 		}
 
 		// Call the next handler
