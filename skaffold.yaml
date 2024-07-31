@@ -1,0 +1,25 @@
+apiVersion: skaffold/v2beta27
+kind: Config
+metadata:
+  name: hipstershop
+build:
+  artifacts:
+    # image tags are relative; to specify an image repo (e.g. GCR), you
+    # must provide a "default repo" using one of the methods described
+    # here:
+    # https://skaffold.dev/docs/concepts/#image-repository-handling
+    - image: cartservice
+      context: src/cartservice
+    - image: frontend
+      context: src/frontend
+  tagPolicy:
+    gitCommit: {}
+  local:
+    useBuildkit: false
+    concurrency: 10
+deploy:
+  kubectl:
+    manifests:
+      - ./kubernetes-manifests/postgres.yaml
+      - ./kubernetes-manifests/cartservice.yaml
+      - ./kubernetes-manifests/frontend.yaml

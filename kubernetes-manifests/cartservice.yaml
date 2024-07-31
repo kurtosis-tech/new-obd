@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cartservice-v1
+  labels:
+    app: cartservice
+    version: v1
+spec:
+  selector:
+    matchLabels:
+      app: cartservice
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: cartservice
+        version: v1
+    spec:
+      terminationGracePeriodSeconds: 5
+      containers:
+        - name: server
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - all
+            privileged: false
+            readOnlyRootFilesystem: true
+          image: cartservice
+          ports:
+            - containerPort: 8090
+          env:
+            - name: PORT
+              value: "8090"
+            - name: DB_USERNAME
+              value: "postgresuser"
+            - name: DB_PASSWORD
+              value: "postgrespass"
+            - name: DB_HOST
+              value: "postgres"
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_NAME
+              value: "cart"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cartservice
+  labels:
+    app: cartservice
+    version: v1
+  annotations:
+    kardinal.dev.service/stateful: "true"
+    kardinal.dev.service/dependencies: "postgres:tcp"
+spec:
+  type: ClusterIP
+  selector:
+    app: cartservice
+  ports:
+    - name: http
+      port: 8090
+      targetPort: 8090

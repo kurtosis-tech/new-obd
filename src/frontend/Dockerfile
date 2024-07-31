@@ -1,18 +1,17 @@
-FROM golang:1.19.0-alpine AS builder
+FROM golang:1.21.9-alpine AS builder
 
 # Set Go env
 ENV CGO_ENABLED=0 GOOS=linux
 WORKDIR /go/src/hipstershop
 
 # Install dependencies
-RUN apk --update --no-cache add ca-certificates make protoc
+RUN apk --update --no-cache add ca-certificates make
 
 # Build Go binary
 COPY Makefile go.mod go.sum ./
 RUN go env -w GOPROXY=https://goproxy.io,direct/
-RUN make init && go mod download
+RUN go mod download
 COPY . .
-RUN make proto tidy
 
 # Skaffold passes in debug-oriented compiler flags
 ARG SKAFFOLD_GO_GCFLAGS

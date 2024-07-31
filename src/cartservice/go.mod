@@ -1,6 +1,6 @@
 module github.com/kurtosis-tech/new-obd/src/cartservice
 
-go 1.21.9
+go 1.21
 
 require (
 	github.com/deepmap/oapi-codegen/v2 v2.2.1-0.20240604070534-2f0ff757704b

@@ -4,10 +4,10 @@ go 1.21.9
 
 toolchain go1.22.4
 
-replace (
-	github.com/kurtosis-tech/new-obd/src/currencyexternalapi => ../currencyexternalapi
-	github.com/kurtosis-tech/new-obd/src/cartservice => ../cartservice
-)
+//replace (
+//	github.com/kurtosis-tech/new-obd/src/currencyexternalapi => ../currencyexternalapi
+//	github.com/kurtosis-tech/new-obd/src/cartservice => ../cartservice
+//)
 
 require (
 	github.com/google/uuid v1.5.0
