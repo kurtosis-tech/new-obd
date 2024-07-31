@@ -29,6 +29,8 @@ func main() {
 	echoRouter := echo.New()
 	echoRouter.Use(middleware.Logger())
 
+	echoRouter.Use(TraceIDMiddleware)
+
 	// CORS configuration
 	echoRouter.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: defaultCORSOrigins,
