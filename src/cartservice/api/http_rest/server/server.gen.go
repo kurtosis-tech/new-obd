@@ -322,7 +322,7 @@ var swaggerSpec = []string{
 	"wmko4Xg0Hh0Dz+aRO1jI9aDbbslSezPpSkEJlzZQXoVObgz0r1XLn+YROzveDtua/GvXo47G4+9C3+n/",
 	"Sxu6ilJiCKlvayDIQTMRa3qtgGdORWea2bti0wi/hDJZF8v2lK6zwsWqX/i2G5saCV+qfZrvk943AX2l",
 	"cqM2/w23+7lsQoq1q7R3f6JsZ42jJcsD2XKY4555PEf6HeR5y/V/lWLnSL1e+T57RKfEEHvbIpI9AYfo",
-	"ayhhQeRCWeQZ7d+L5BTtXfs1AAD///zGfqemCAAA",
+	"ayhhQeRCWeQZXVtIe9d+DQAA//+sh44joggAAA==",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

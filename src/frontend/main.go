@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	cartservice_rest_client "github.com/kurtosis-tech/new-obd/src/cartservice/api/http_rest/client"
 	"net/http"
 	"os"
 	"time"
@@ -36,6 +37,10 @@ var (
 
 type ctxKeySessionID struct{}
 
+type frontendServer struct {
+	cartService *cartservice_rest_client.ClientWithResponses
+}
+
 func main() {
 
 	log := logrus.New()
@@ -50,8 +55,17 @@ func main() {
 	}
 	log.Out = os.Stdout
 
+	cartServiceClient, err := cartservice_rest_client.NewClientWithResponses("http://localhost:8090", cartservice_rest_client.WithHTTPClient(&http.Client{}))
+	if err != nil {
+		logrus.Fatal("An error occurred creating cart service client!\nError was: %s", err)
+	}
+
+	svc := &frontendServer{
+		cartService: cartServiceClient,
+	}
+
 	r := mux.NewRouter()
-	r.HandleFunc("/", homeHandler).Methods(http.MethodGet, http.MethodHead)
+	r.HandleFunc("/", svc.homeHandler).Methods(http.MethodGet, http.MethodHead)
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./static/"))))
 	/*r.HandleFunc("/product/{id}", svc.productHandler).Methods(http.MethodGet, http.MethodHead)
 	r.HandleFunc("/cart", svc.viewCartHandler).Methods(http.MethodGet, http.MethodHead)
@@ -74,6 +88,6 @@ func main() {
 	// Start the server
 	http.Handle("/", r)
 	fmt.Println("Server starting on port 8080...")
-	http.ListenAndServe(":8080", nil)
+	http.ListenAndServe(":8080", handler)
 
 }

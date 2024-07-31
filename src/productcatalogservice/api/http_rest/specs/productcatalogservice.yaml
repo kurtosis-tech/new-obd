@@ -1,40 +1,19 @@
 openapi: 3.0.3
 
 info:
-  title: Cart service
-  description: RESTful API specification for the Cart service, it's used to auto-generate client SDK's and server-side code
+  title: Product catalog service
+  description: RESTful API specification for the Product catalog service, it's used to auto-generate client SDK's and server-side code
   version: 0.1.0
 
 servers:
-  - url: https://cartservice
-    description: Cart service API
+  - url: https://productcatalogservice/
+    description: Product catalog service API
 
 paths:
 
-  /cart:
-    post:
-      summary: Add item
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/AddItemRequest"
-      responses:
-        default:
-          $ref: "#/components/responses/NotOk"
-        "200":
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                type: object
-
-  /cart/{user_id}:
+  /products:
     get:
-      summary: Get cart
-      parameters:
-        - $ref: "#/components/parameters/user_id"
+      summary: List products
       responses:
         default:
           $ref: "#/components/responses/NotOk"
@@ -43,14 +22,15 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                $ref: "#/components/schemas/Cart"
+                type: array
+                items:
+                  $ref: "#/components/schemas/Product"
 
-    delete:
-      tags:
-      summary: Empty cart
+  /products/{id}:
+    get:
+      summary: Get product by id
       parameters:
-        - $ref: "#/components/parameters/user_id"
+        - $ref: "#/components/parameters/id"
       responses:
         default:
           $ref: "#/components/responses/NotOk"
@@ -60,6 +40,7 @@ paths:
             application/json:
               schema:
                 type: object
+                $ref: "#/components/schemas/Product"
 
 # =========================================================================================================================
 # =========================================================================================================================
@@ -69,11 +50,11 @@ paths:
 
 components:
   parameters:
-    user_id:
-      name: user_id
+    id:
+      name: id
       in: path
       required: true
-      description: user id
+      description: product id
       schema:
         type: string
 
@@ -109,30 +90,32 @@ components:
         - message
         - code
 
-    AddItemRequest:
+    Money:
       type: object
       properties:
-        user_id:
+        currency_code:
           type: string
-        item:
-          $ref: "#/components/schemas/CartItem"
-
-    Cart:
-      type: object
-      properties:
-        user_id:
-          type: string
-        items:
-          type: array
-          items:
-            $ref: "#/components/schemas/CartItem"
-
-
-    CartItem:
-      type: object
-      properties:
-        product_id:
-          type: string
-        quantity:
+        units:
+          type: integer
+          format: int64
+        nanos:
           type: integer
           format: int32
+
+    Product:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        picture:
+          type: string
+        price_usd:
+          $ref: "#/components/schemas/Money"
+        categories:
+          type: array
+          items:
+            type: string

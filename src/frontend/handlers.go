@@ -16,11 +16,12 @@ package main
 
 import (
 	"fmt"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/runtime/protoimpl"
 	"html/template"
+	"log"
 
-	"net"
 	"net/http"
 	"os"
 
@@ -80,7 +81,7 @@ var (
 
 var validEnvs = []string{"local", "gcp", "azure", "aws", "onprem", "alibaba"}
 
-func homeHandler(w http.ResponseWriter, r *http.Request) {
+func (fe *frontendServer) homeHandler(w http.ResponseWriter, r *http.Request) {
 	//log := r.Context().Value(ctxKeyLog{}).(logrus.FieldLogger)//TODO fix
 	//log.WithField("currency", currentCurrency(r)).Info("home")
 	/*currencies, err := fe.getCurrencies(r.Context())
@@ -95,62 +96,43 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		renderHTTPError(log, r, w, errors.Wrap(err, "could not retrieve products"), http.StatusInternalServerError)
 		return
-	}
-	//TODO fix
-	cart, err := fe.getCart(r.Context(), sessionID(r))
-	if err != nil {
-		renderHTTPError(log, r, w, errors.Wrap(err, "could not retrieve cart"), http.StatusInternalServerError)
-		return
 	}*/
-
-	/*cartServiceClient, err := cartservice_rest_client.NewClient("http://localhost:8090", cartservice_rest_client.WithHTTPClient(&http.Client{}))
-	if err != nil {
-		logrus.Error(err)
-	}
-
-	response, err := cartServiceClient.GetCartUserId(context.Background(), "2020")
-	if err != nil {
-		logrus.Error(err)
-	}
-	logrus.Debugf("[LEO-DEBUG] %s", response.Status)*/
-
-	type productView struct {
-		Item  *Product
-		Price *Money
-	}
 	//TODO fix
-	ps := []productView{
-		{
-			Item: &Product{
-				Picture: "",
-				Id:      "77",
-				Name:    "fake",
-				PriceUsd: &Money{
-					CurrencyCode: "USD",
-					Units:        1,
-					Nanos:        0,
-				},
-			},
-		},
+	cartResponse, err := fe.cartService.GetCartUserIdWithResponse(r.Context(), sessionID(r))
+	if err != nil {
+		renderHTTPError(r, w, errors.Wrap(err, "could not retrieve cart"), http.StatusInternalServerError)
+		return
 	}
 
-	// Set ENV_PLATFORM (default to local if not set; use env var if set; otherwise detect GCP, which overrides env)_
-	var env = os.Getenv("ENV_PLATFORM")
-	// Only override from env variable if set + valid env
-	if env == "" || !stringinSlice(validEnvs, env) {
-		fmt.Println("env platform is either empty or invalid")
-		env = "local"
-	}
-	// Autodetect GCP
-	addrs, err := net.LookupHost("metadata.google.internal.")
-	if err == nil && len(addrs) >= 0 {
-		logrus.Debugf("Detected Google metadata server: %v, setting ENV_PLATFORM to GCP.", addrs)
-		env = "gcp"
-	}
+	cart := cartResponse.JSON200
 
-	logrus.Debugf("ENV_PLATFORM is: %s", env)
-	plat = platformDetails{}
-	plat.setPlatformDetails(strings.ToLower(env))
+	type cartItemView struct {
+		Item     *Product
+		Quantity int32
+		Price    *Money
+	}
+	items := make([]cartItemView, len(*cart.Items))
+	totalPrice := &Money{CurrencyCode: currentCurrency(r)}
+	for i, item := range cart {
+		p, err := fe.getProduct(r.Context(), item.GetProductId())
+		if err != nil {
+			renderHTTPError(log, r, w, errors.Wrapf(err, "could not retrieve product #%s", item.GetProductId()), http.StatusInternalServerError)
+			return
+		}
+		price, err := fe.convertCurrency(r.Context(), p.GetPriceUsd(), currentCurrency(r))
+		if err != nil {
+			renderHTTPError(log, r, w, errors.Wrapf(err, "could not convert currency for product #%s", item.GetProductId()), http.StatusInternalServerError)
+			return
+		}
+
+		multPrice := money.MultiplySlow(price, uint32(item.GetQuantity()))
+		items[i] = cartItemView{
+			Item:     p,
+			Quantity: item.GetQuantity(),
+			Price:    multPrice,
+		}
+		totalPrice = money.Must(money.Sum(totalPrice, multPrice))
+	}
 
 	if err := templates.ExecuteTemplate(w, "home", map[string]interface{}{
 		"session_id":    sessionID(r),
@@ -165,7 +147,6 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 		"platform_css":    plat.css,
 		"platform_name":   plat.provider,
 		"is_cymbal_brand": isCymbalBrand,
-		//"deploymentDetails": deploymentDetailsMap, //TODO fix
 	}); err != nil {
 		logrus.Error(err)
 	}
@@ -238,4 +219,22 @@ func stringinSlice(slice []string, val string) bool {
 		}
 	}
 	return false
+}
+
+func renderHTTPError(r *http.Request, w http.ResponseWriter, err error, code int) {
+	logrus.Errorf("requested error: %s", err)
+	errMsg := fmt.Sprintf("%+v", err)
+
+	w.WriteHeader(code)
+
+	if templateErr := templates.ExecuteTemplate(w, "error", map[string]interface{}{
+		"session_id":  sessionID(r),
+		"request_id":  r.Context().Value(ctxKeyRequestID{}),
+		"error":       errMsg,
+		"status_code": code,
+		"status":      http.StatusText(code),
+		//"deploymentDetails": deploymentDetailsMap,
+	}); templateErr != nil {
+		log.Println(templateErr)
+	}
 }

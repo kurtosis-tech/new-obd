@@ -11,9 +11,10 @@ toolchain go1.22.4
 
 require (
 	github.com/google/uuid v1.5.0
-	github.com/gorilla/mux v1.8.0
-	github.com/kurtosis-tech/new-obd/src/cartservice v0.0.0-20240730221233-4a5135ef7421
-	github.com/kurtosis-tech/online-boutique-demo/src/currencyexternalapi v0.0.0-20240729190836-e99f63c9b42e
+	github.com/gorilla/mux v1.8.1
+	github.com/kurtosis-tech/new-obd/src/cartservice v0.0.0-20240731034219-680be220772b
+	github.com/kurtosis-tech/online-boutique-demo/src/currencyexternalapi v0.0.0-20240730171234-cd7da1f8a45f
+	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.8.1
 	go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux v0.36.3
 	google.golang.org/protobuf v1.31.0
