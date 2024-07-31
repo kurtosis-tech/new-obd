@@ -131,8 +131,10 @@ func (fe *frontendServer) productHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	setKardinalReqEditorFcn := getSetTraceIdHeaderRequestEditorFcn(r)
+
 	fmt.Printf("product: %p\n", r.Context())
-	productResponse, err := fe.productCatalogService.GetProductsIdWithResponse(r.Context(), id)
+	productResponse, err := fe.productCatalogService.GetProductsIdWithResponse(r.Context(), id, setKardinalReqEditorFcn)
 	if err != nil {
 		renderHTTPError(r, w, errors.Wrapf(err, "could not retrieve product #%s", id), http.StatusInternalServerError)
 		return
@@ -145,7 +147,7 @@ func (fe *frontendServer) productHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	cartResponse, err := fe.cartService.GetCartUserIdWithResponse(r.Context(), sessionID(r))
+	cartResponse, err := fe.cartService.GetCartUserIdWithResponse(r.Context(), sessionID(r), setKardinalReqEditorFcn)
 	if err != nil {
 		renderHTTPError(r, w, errors.Wrap(err, "could not retrieve cart"), http.StatusInternalServerError)
 		return
@@ -193,7 +195,9 @@ func (fe *frontendServer) addToCartHandler(w http.ResponseWriter, r *http.Reques
 	}
 	//log.WithField("product", productID).WithField("quantity", quantity).Debug("adding to cart")
 
-	productResponse, err := fe.productCatalogService.GetProductsIdWithResponse(r.Context(), productID)
+	setKardinalReqEditorFcn := getSetTraceIdHeaderRequestEditorFcn(r)
+
+	productResponse, err := fe.productCatalogService.GetProductsIdWithResponse(r.Context(), productID, setKardinalReqEditorFcn)
 	if err != nil {
 		renderHTTPError(r, w, errors.Wrapf(err, "could not retrieve product #%s", productID), http.StatusInternalServerError)
 		return
@@ -225,8 +229,10 @@ func (fe *frontendServer) emptyCartHandler(w http.ResponseWriter, r *http.Reques
 	//log := r.Context().Value(ctxKeyLog{}).(logrus.FieldLogger)
 	//log.Debug("emptying cart")
 
+	setKardinalReqEditorFcn := getSetTraceIdHeaderRequestEditorFcn(r)
+
 	userId := sessionID(r)
-	if _, err := fe.cartService.DeleteCartUserId(r.Context(), userId); err != nil {
+	if _, err := fe.cartService.DeleteCartUserId(r.Context(), userId, setKardinalReqEditorFcn); err != nil {
 		renderHTTPError(r, w, errors.Wrap(err, "failed to empty cart"), http.StatusInternalServerError)
 		return
 	}
@@ -235,13 +241,15 @@ func (fe *frontendServer) emptyCartHandler(w http.ResponseWriter, r *http.Reques
 }
 
 func (fe *frontendServer) viewCartHandler(w http.ResponseWriter, r *http.Request) {
+	setKardinalReqEditorFcn := getSetTraceIdHeaderRequestEditorFcn(r)
+
 	currencies, err := fe.currencyService.GetSupportedCurrencies(r.Context())
 	if err != nil {
 		renderHTTPError(r, w, errors.Wrapf(err, "error retrieving currencies"), http.StatusInternalServerError)
 		return
 	}
 
-	cartResponse, err := fe.cartService.GetCartUserIdWithResponse(r.Context(), sessionID(r))
+	cartResponse, err := fe.cartService.GetCartUserIdWithResponse(r.Context(), sessionID(r), setKardinalReqEditorFcn)
 	if err != nil {
 		renderHTTPError(r, w, errors.Wrap(err, "could not retrieve cart"), http.StatusInternalServerError)
 		return
