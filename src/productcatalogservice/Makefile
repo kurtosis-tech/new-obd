@@ -18,4 +18,4 @@ test:
 
 .PHONY: docker
 docker:
-	@docker build -t productcatalogservice:latest .
+	@docker build -t leoporoli/newobd-productcatalogservice:0.0.2 .

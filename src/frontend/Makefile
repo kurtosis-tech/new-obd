@@ -18,4 +18,4 @@ test:
 
 .PHONY: docker
 docker:
-	@docker build -t frontend:latest .
+	@docker build -t leoporoli/newobd-frontend:0.0.2 .
