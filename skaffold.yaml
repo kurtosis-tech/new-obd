@@ -12,8 +12,8 @@ build:
       context: src/cartservice
     - image: productcatalogservice
       context: src/productcatalogservice
-      #- image: frontend
-    #  context: src/frontend
+    - image: frontend
+      context: src/frontend
   tagPolicy:
     gitCommit: {}
   local:
@@ -25,4 +25,4 @@ deploy:
       - ./kubernetes-manifests/postgres.yaml
       - ./kubernetes-manifests/cartservice.yaml
       - ./kubernetes-manifests/productcatalogservice.yaml
-      #- ./kubernetes-manifests/frontend.yaml
+      - ./kubernetes-manifests/frontend.yaml

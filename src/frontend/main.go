@@ -59,12 +59,18 @@ func main() {
 	}
 	log.Out = os.Stdout
 
-	cartServiceClient, err := cartservice_rest_client.NewClientWithResponses("http://localhost:8090", cartservice_rest_client.WithHTTPClient(&http.Client{}))
+	cartServiceHost := os.Getenv("CARTSERVICEHOST")
+	productCatalogServiceHost := os.Getenv("PRODUCTCATALOGSERVICEHOST")
+
+	cartServiceServer := fmt.Sprintf("http://%s:8090", cartServiceHost)
+	productCatalogServiceServer := fmt.Sprintf("http://%s:8070", productCatalogServiceHost)
+
+	cartServiceClient, err := cartservice_rest_client.NewClientWithResponses(cartServiceServer, cartservice_rest_client.WithHTTPClient(&http.Client{}))
 	if err != nil {
 		logrus.Fatal("An error occurred creating cart service client!\nError was: %s", err)
 	}
 
-	productCatalogServiceClient, err := productcatalogservice_rest_client.NewClientWithResponses("http://localhost:8070", productcatalogservice_rest_client.WithHTTPClient(&http.Client{}))
+	productCatalogServiceClient, err := productcatalogservice_rest_client.NewClientWithResponses(productCatalogServiceServer, productcatalogservice_rest_client.WithHTTPClient(&http.Client{}))
 	if err != nil {
 		logrus.Fatal("An error occurred creating cart service client!\nError was: %s", err)
 	}
