@@ -79,6 +79,8 @@ spec:
     - name: http
       port: 8090
       targetPort: 8090
+      protocol: TCP
+      appProtocol: HTTP
 
 ---
 apiVersion: apps/v1
@@ -168,6 +170,8 @@ spec:
     - name: http
       port: 80
       targetPort: 8080
+      protocol: TCP
+      appProtocol: HTTP
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -222,6 +226,8 @@ spec:
     - name: tcp
       port: 5432
       targetPort: 5432
+      protocol: TCP
+      appProtocol: HTTP
   selector:
     app: postgres
 
@@ -287,3 +293,5 @@ spec:
     - name: http
       port: 8070
       targetPort: 8070
+      protocol: TCP
+      appProtocol: HTTP
