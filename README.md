@@ -13,7 +13,7 @@ minikube start --driver=docker --cpus=10 --memory 8192 --disk-size 32g
 minikube addons enable ingress
 ```
 
-2. Bot prod.app.localhost and dev.app.localhost defined in the host file
+2. Both prod.app.localhost and dev.app.localhost defined in the host file
 ```bash
 # Add these entries in the '/private/etc/hosts' file
 127.0.0.1 prod.app.localhost
