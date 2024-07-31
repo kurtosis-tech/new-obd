@@ -10,6 +10,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	"sync"
+	"time"
 )
 
 type ListProductsResponse struct {
@@ -23,6 +24,19 @@ type Server struct {
 
 func NewServer() Server {
 	return Server{}
+}
+
+func (s Server) GetHealth(ctx context.Context, request productcatalogservice_server_rest_server.GetHealthRequestObject) (productcatalogservice_server_rest_server.GetHealthResponseObject, error) {
+
+	status := "ok"
+	now := time.Now()
+
+	response := productcatalogservice_rest_types.HealthResponse{
+		Status:    &status,
+		Timestamp: &now,
+	}
+
+	return productcatalogservice_server_rest_server.GetHealth200JSONResponse(response), nil
 }
 
 func (s Server) GetProducts(ctx context.Context, request productcatalogservice_server_rest_server.GetProductsRequestObject) (productcatalogservice_server_rest_server.GetProductsResponseObject, error) {

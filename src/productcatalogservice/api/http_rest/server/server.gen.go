@@ -24,6 +24,9 @@ import (
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// Health check endpoint
+	// (GET /health)
+	GetHealth(ctx echo.Context) error
 	// List products
 	// (GET /products)
 	GetProducts(ctx echo.Context) error
@@ -35,6 +38,15 @@ type ServerInterface interface {
 // ServerInterfaceWrapper converts echo contexts to parameters.
 type ServerInterfaceWrapper struct {
 	Handler ServerInterface
+}
+
+// GetHealth converts echo context to params.
+func (w *ServerInterfaceWrapper) GetHealth(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.GetHealth(ctx)
+	return err
 }
 
 // GetProducts converts echo context to params.
@@ -90,12 +102,41 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 		Handler: si,
 	}
 
+	router.GET(baseURL+"/health", wrapper.GetHealth)
 	router.GET(baseURL+"/products", wrapper.GetProducts)
 	router.GET(baseURL+"/products/:id", wrapper.GetProductsId)
 
 }
 
 type NotOkJSONResponse ResponseInfo
+
+type GetHealthRequestObject struct {
+}
+
+type GetHealthResponseObject interface {
+	VisitGetHealthResponse(w http.ResponseWriter) error
+}
+
+type GetHealth200JSONResponse HealthResponse
+
+func (response GetHealth200JSONResponse) VisitGetHealthResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetHealthdefaultJSONResponse struct {
+	Body       ResponseInfo
+	StatusCode int
+}
+
+func (response GetHealthdefaultJSONResponse) VisitGetHealthResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
 
 type GetProductsRequestObject struct {
 }
@@ -156,6 +197,9 @@ func (response GetProductsIddefaultJSONResponse) VisitGetProductsIdResponse(w ht
 
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
+	// Health check endpoint
+	// (GET /health)
+	GetHealth(ctx context.Context, request GetHealthRequestObject) (GetHealthResponseObject, error)
 	// List products
 	// (GET /products)
 	GetProducts(ctx context.Context, request GetProductsRequestObject) (GetProductsResponseObject, error)
@@ -174,6 +218,29 @@ func NewStrictHandler(ssi StrictServerInterface, middlewares []StrictMiddlewareF
 type strictHandler struct {
 	ssi         StrictServerInterface
 	middlewares []StrictMiddlewareFunc
+}
+
+// GetHealth operation middleware
+func (sh *strictHandler) GetHealth(ctx echo.Context) error {
+	var request GetHealthRequestObject
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.GetHealth(ctx.Request().Context(), request.(GetHealthRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetHealth")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(GetHealthResponseObject); ok {
+		return validResponse.VisitGetHealthResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
 }
 
 // GetProducts operation middleware
@@ -227,18 +294,20 @@ func (sh *strictHandler) GetProductsId(ctx echo.Context, id Id) error {
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/7xV0U4bOxD9FWvulXhZsrlw1Yd9QypFUduAAlUfEELGniSmWdsdj1GjaP+9sneTELKh",
-	"VJX6EmW9xzNnzpmZXYFytXcWLQeoVuAlyRoZKT8ZnX41BkXGs3EWKvDkdFQsjIYCTD6RPIcCrKwRKsjn",
-	"hN+jIdRQMUUsIKg51jIF46VPqMBk7Ayapkng4J0NmFOOHV9+S3+Us4yW01/p/cIomQiUjyGxWD2L+C/h",
-	"FCr4p9xWUrZvQznpQo/s1LXJdov5YvGHR8WoBRI5ggTpLqfYn53FZdaFnEdi05JUkQitWt4rp7GnqiSG",
-	"dRk6dVRLTrpYPj2BYg01lnGGlLDRGt7Dvvu/B9tsjtzDIypOt69aP3pISsaZo+7JMNahl2p3IInkEl4q",
-	"1INvm6Kn4rpfCm8URzrwjozC+xj0r4xsjegVYMfjfRU6hzbaxsNG1BiCnOErKr2t224Stu3s9RjctgG2",
-	"OYqW2d0rBd10KdHGOkU4n0wuJ1DAaPzhEgr4ejYZj8YXz0I8HyrTqbHb75Pz65tpXIizq5EIHpWZdnMl",
-	"po4Ez1F07SSUZLlwMxGQnozCQhg+CiIG1IKdkJHd8QwtkmQUamHQsrh+//EoCGl1voR0HIxGkcssgA0v",
-	"EscD8aGAJ6TQshwO/hsMkxLOo5XeQAWng+HgFIq8a7KvZbeH8sMMc/8n33M1Iw0VXCBfrTEvlszJcPhb",
-	"K2YzPK+5vx7EvZHaXzvXUSkMITmx5tVO3lTGBR9KtCmhbJdk3lWxriUtoYJPJrDYiJLebSQqV0Y3b9Fp",
-	"pLPE20/AbT+TLaQ0Gpq7P5T3Tar+HRUvcCOieFimj1xO3DZ0K8guiQP9nCYMCoi0gArmzD5U5dqPDtoh",
-	"S2jump8BAAD//0FxNqeHBwAA",
+	"H4sIAAAAAAAC/7xWYYsbNxD9K2JayJe1d+sLLd1vgaZX0/bu8F0oNBxBkca2Eq+kjkYh5vB/L5LW6/N5",
+	"fQ2kLRyHLL+defNm5nkfQLnOO4uWA7QP4CXJDhkpfzI6/dcYFBnPxllowZPTUbEwGiow+UbyGiqwskNo",
+	"Id8T/hUNoYaWKWIFQa2xkykYb31CBSZjV7Db7RI4eGcD5pRXjq8/poNyltFyOkrvN0bJRKD+EBKLh0cR",
+	"vyVcQgvf1IdK6vJtqBd96LldupLsuJg3Fj97VIxaIJEjSJD+4RT7F5QbXu+jZIHIeSQ2hW1gyTGf8LPs",
+	"/CaV9uYGqqdlVsCmw8Cy88fgWTN7OWl+mMx+vGuaNv/9CRUsHXWSoQUtGSfp2dOYu+HGvf+AilOW353F",
+	"7SlNFYnQqu075TSOdCE1z7oMHTIbyxezQ1ZjGVdICRut4RPs9y9HsGMUb8r8jJCUjCtH/SfD2IVRqv2F",
+	"JJJbeNrREXwZ4pGKu3EpvFEc6cx3ZBS+i0H/0+CVRowKcDSTpyr0HRq0jecb0WEIcoXPqPRl23GXsGUT",
+	"92v7tgQ45KgKs/tnCrrrU6KNXYrwerG4XkAF86ufr6GCP14truZXl49CPDYB06txvJ+L17d3y7gRr27m",
+	"InhUZtn7gFg6ErxG0Y+TUJLlxq1EQPpkFFbC8IsgYkAt2AkZ2U1WaJEko1Abg5bF7U+/vghCWp0fQpoE",
+	"o1HkMtO+cl7QM/Ghgk9IobBspt9Nm6SE82ilN9DCxbSZXkCVvTH3tV5nK0nHFfJIpciRbMg1Fago5iLc",
+	"Ml/2iaeQ01BWYa6hhUvkYlPwxEpnTfOvGekTIxyx0tvCT5jQ8++Xcynjhs+FH/jWxfez/cauk7SFtndf",
+	"odaoPgq02jtjOWPq/lcoPNLzRJWbPeYrdRms6DmB9rZ2YlAjSkWlMIQ01zQI+pVS/WYCi0GUI4nqB6N3",
+	"X6LTXOeBPbwAvB1ncoDURsPu/j8cu0HV/0fFSxxEFO+36RUnJy72UAQ5JnHGHZJfQQWRNtDCmtmHtt73",
+	"o4f2yBp297u/AwAA//8OU3jphQkAAA==",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

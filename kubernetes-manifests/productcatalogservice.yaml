@@ -22,6 +22,23 @@ spec:
           image: productcatalogservice
           ports:
             - containerPort: 8070
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8070
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+            successThreshold: 1
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8070
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
           env:
             - name: PORT
               value: "8070"

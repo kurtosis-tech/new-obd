@@ -5,6 +5,7 @@ import (
 	cartservice_server_rest_server "github.com/kurtosis-tech/new-obd/src/cartservice/api/http_rest/server"
 	cartservice_rest_types "github.com/kurtosis-tech/new-obd/src/cartservice/api/http_rest/types"
 	"github.com/kurtosis-tech/new-obd/src/cartservice/cartstore"
+	"time"
 )
 
 type Server struct {
@@ -13,6 +14,19 @@ type Server struct {
 
 func NewServer(store cartstore.CartStore) Server {
 	return Server{Store: store}
+}
+
+func (s Server) GetHealth(ctx context.Context, request cartservice_server_rest_server.GetHealthRequestObject) (cartservice_server_rest_server.GetHealthResponseObject, error) {
+
+	status := "ok"
+	now := time.Now()
+
+	response := cartservice_rest_types.HealthResponse{
+		Status:    &status,
+		Timestamp: &now,
+	}
+
+	return cartservice_server_rest_server.GetHealth200JSONResponse(response), nil
 }
 
 func (s Server) PostCart(ctx context.Context, object cartservice_server_rest_server.PostCartRequestObject) (cartservice_server_rest_server.PostCartResponseObject, error) {
