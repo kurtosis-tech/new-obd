@@ -10,8 +10,10 @@ build:
     # https://skaffold.dev/docs/concepts/#image-repository-handling
     - image: cartservice
       context: src/cartservice
-    - image: frontend
-      context: src/frontend
+    - image: productcatalogservice
+      context: src/productcatalogservice
+      #- image: frontend
+    #  context: src/frontend
   tagPolicy:
     gitCommit: {}
   local:
@@ -22,4 +24,5 @@ deploy:
     manifests:
       - ./kubernetes-manifests/postgres.yaml
       - ./kubernetes-manifests/cartservice.yaml
-      - ./kubernetes-manifests/frontend.yaml
+      - ./kubernetes-manifests/productcatalogservice.yaml
+      #- ./kubernetes-manifests/frontend.yaml

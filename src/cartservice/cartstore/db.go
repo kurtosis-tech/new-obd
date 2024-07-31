@@ -83,9 +83,11 @@ func (db *Db) GetCart(ctx context.Context, userID string) (*cartservice_rest_typ
 	cartItems := []cartservice_rest_types.CartItem{}
 
 	for _, item := range items {
+		prodId := item.ProductID
+		quan := item.Quantity
 		cartItemObj := cartservice_rest_types.CartItem{
-			ProductId: &item.ProductID,
-			Quantity:  &item.Quantity,
+			ProductId: &prodId,
+			Quantity:  &quan,
 		}
 		cartItems = append(cartItems, cartItemObj)
 	}

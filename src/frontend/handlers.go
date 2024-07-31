@@ -16,14 +16,18 @@ package main
 
 import (
 	"fmt"
+	"github.com/gorilla/mux"
+	cartservice_rest_types "github.com/kurtosis-tech/new-obd/src/cartservice/api/http_rest/types"
+	"github.com/kurtosis-tech/new-obd/src/frontend/money"
+	productcatalogservice_rest_types "github.com/kurtosis-tech/new-obd/src/productcatalogservice/api/http_rest/types"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"google.golang.org/protobuf/runtime/protoimpl"
 	"html/template"
 	"log"
-
 	"net/http"
 	"os"
+	"strconv"
+	"time"
 
 	"strings"
 )
@@ -31,42 +35,6 @@ import (
 type platformDetails struct {
 	css      string
 	provider string
-}
-
-// TODO fix
-type Money struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	// The 3-letter currency code defined in ISO 4217.
-	CurrencyCode string `protobuf:"bytes,1,opt,name=currency_code,json=currencyCode,proto3" json:"currency_code,omitempty"`
-	// The whole units of the amount.
-	// For example if `currencyCode` is `"USD"`, then 1 unit is one US dollar.
-	Units int64 `protobuf:"varint,2,opt,name=units,proto3" json:"units,omitempty"`
-	// Number of nano (10^-9) units of the amount.
-	// The value must be between -999,999,999 and +999,999,999 inclusive.
-	// If `units` is positive, `nanos` must be positive or zero.
-	// If `units` is zero, `nanos` can be positive, zero, or negative.
-	// If `units` is negative, `nanos` must be negative or zero.
-	// For example $-1.75 is represented as `units`=-1 and `nanos`=-750,000,000.
-	Nanos int32 `protobuf:"varint,3,opt,name=nanos,proto3" json:"nanos,omitempty"`
-}
-
-// TODO fix
-type Product struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Id          string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name        string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Description string `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
-	Picture     string `protobuf:"bytes,4,opt,name=picture,proto3" json:"picture,omitempty"`
-	PriceUsd    *Money `protobuf:"bytes,5,opt,name=price_usd,json=priceUsd,proto3" json:"price_usd,omitempty"`
-	// Categories such as "clothing" or "kitchen" that can be used to look up
-	// other related products.
-	Categories []string `protobuf:"bytes,6,rep,name=categories,proto3" json:"categories,omitempty"`
 }
 
 var (
@@ -84,20 +52,20 @@ var validEnvs = []string{"local", "gcp", "azure", "aws", "onprem", "alibaba"}
 func (fe *frontendServer) homeHandler(w http.ResponseWriter, r *http.Request) {
 	//log := r.Context().Value(ctxKeyLog{}).(logrus.FieldLogger)//TODO fix
 	//log.WithField("currency", currentCurrency(r)).Info("home")
-	/*currencies, err := fe.getCurrencies(r.Context())
+
+	currencies, err := fe.currencyService.GetSupportedCurrencies(r.Context())
 	if err != nil {
-		renderHTTPError(log, r, w, errors.Wrap(err, "could not retrieve currencies"), http.StatusInternalServerError)
+		renderHTTPError(r, w, errors.Wrapf(err, "error retrieving currencies"), http.StatusInternalServerError)
 		return
-	}*/
-	//TODO fix
-	currencies := []string{"USD"}
-	//TODO fix
-	/*products, err := fe.getProducts(r.Context())
+	}
+
+	productResponse, err := fe.productCatalogService.GetProductsWithResponse(r.Context())
 	if err != nil {
-		renderHTTPError(log, r, w, errors.Wrap(err, "could not retrieve products"), http.StatusInternalServerError)
+		renderHTTPError(r, w, errors.Wrapf(err, "could not retrieve products"), http.StatusInternalServerError)
 		return
-	}*/
-	//TODO fix
+	}
+	productsList := productResponse.JSON200
+
 	cartResponse, err := fe.cartService.GetCartUserIdWithResponse(r.Context(), sessionID(r))
 	if err != nil {
 		renderHTTPError(r, w, errors.Wrap(err, "could not retrieve cart"), http.StatusInternalServerError)
@@ -106,32 +74,22 @@ func (fe *frontendServer) homeHandler(w http.ResponseWriter, r *http.Request) {
 
 	cart := cartResponse.JSON200
 
-	type cartItemView struct {
-		Item     *Product
-		Quantity int32
-		Price    *Money
+	type productView struct {
+		Item  productcatalogservice_rest_types.Product
+		Price *productcatalogservice_rest_types.Money
 	}
-	items := make([]cartItemView, len(*cart.Items))
-	totalPrice := &Money{CurrencyCode: currentCurrency(r)}
-	for i, item := range cart {
-		p, err := fe.getProduct(r.Context(), item.GetProductId())
-		if err != nil {
-			renderHTTPError(log, r, w, errors.Wrapf(err, "could not retrieve product #%s", item.GetProductId()), http.StatusInternalServerError)
-			return
-		}
-		price, err := fe.convertCurrency(r.Context(), p.GetPriceUsd(), currentCurrency(r))
-		if err != nil {
-			renderHTTPError(log, r, w, errors.Wrapf(err, "could not convert currency for product #%s", item.GetProductId()), http.StatusInternalServerError)
-			return
-		}
 
-		multPrice := money.MultiplySlow(price, uint32(item.GetQuantity()))
-		items[i] = cartItemView{
-			Item:     p,
-			Quantity: item.GetQuantity(),
-			Price:    multPrice,
+	products := *productsList
+
+	ps := make([]productView, len(products))
+	for i, p := range products {
+		price, err := fe.currencyService.Convert(r.Context(), *p.PriceUsd.CurrencyCode, *p.PriceUsd.Units, *p.PriceUsd.Nanos, currentCurrency(r))
+		if err != nil {
+			renderHTTPError(r, w, errors.Wrapf(err, "could not convert currency for product #%s", *p.Id), http.StatusInternalServerError)
+			return
 		}
-		totalPrice = money.Must(money.Sum(totalPrice, multPrice))
+		newPV := productView{p, price}
+		ps[i] = newPV
 	}
 
 	if err := templates.ExecuteTemplate(w, "home", map[string]interface{}{
@@ -141,7 +99,7 @@ func (fe *frontendServer) homeHandler(w http.ResponseWriter, r *http.Request) {
 		"show_currency": true,
 		"currencies":    currencies,
 		"products":      ps,
-		"cart_size":     1,                         //TODO fix
+		"cart_size":     cartSize(*cart.Items),
 		"banner_color":  os.Getenv("BANNER_COLOR"), // illustrates canary deployments
 		//"ad":                fe.chooseAd(r.Context(), []string{}, log), //TODO fix
 		"platform_css":    plat.css,
@@ -150,6 +108,229 @@ func (fe *frontendServer) homeHandler(w http.ResponseWriter, r *http.Request) {
 	}); err != nil {
 		logrus.Error(err)
 	}
+}
+
+func (fe *frontendServer) productHandler(w http.ResponseWriter, r *http.Request) {
+	/*log := r.Context().Value(ctxKeyLog{}).(logrus.FieldLogger)
+	id := mux.Vars(r)["id"]
+	if id == "" {
+		renderHTTPError(log, r, w, errors.New("product id not specified"), http.StatusBadRequest)
+		return
+	}
+	log.WithField("id", id).WithField("currency", currentCurrency(r)).
+		Debug("serving product page")
+	*/
+
+	id := mux.Vars(r)["id"]
+	if id == "" {
+		renderHTTPError(r, w, errors.New("product id not specified"), http.StatusBadRequest)
+		return
+	}
+
+	fmt.Printf("product: %p\n", r.Context())
+	productResponse, err := fe.productCatalogService.GetProductsIdWithResponse(r.Context(), id)
+	if err != nil {
+		renderHTTPError(r, w, errors.Wrapf(err, "could not retrieve product #%s", id), http.StatusInternalServerError)
+		return
+	}
+	p := productResponse.JSON200
+
+	currencies, err := fe.currencyService.GetSupportedCurrencies(r.Context())
+	if err != nil {
+		renderHTTPError(r, w, errors.Wrapf(err, "error retrieving currencies"), http.StatusInternalServerError)
+		return
+	}
+
+	cartResponse, err := fe.cartService.GetCartUserIdWithResponse(r.Context(), sessionID(r))
+	if err != nil {
+		renderHTTPError(r, w, errors.Wrap(err, "could not retrieve cart"), http.StatusInternalServerError)
+		return
+	}
+
+	cart := cartResponse.JSON200
+
+	price, err := fe.currencyService.Convert(r.Context(), *p.PriceUsd.CurrencyCode, *p.PriceUsd.Units, *p.PriceUsd.Nanos, currentCurrency(r))
+	if err != nil {
+		renderHTTPError(r, w, errors.Wrapf(err, "could not convert currency for product #%s", *p.Id), http.StatusInternalServerError)
+		return
+	}
+
+	product := struct {
+		Item  productcatalogservice_rest_types.Product
+		Price *productcatalogservice_rest_types.Money
+	}{*p, price}
+
+	if err := templates.ExecuteTemplate(w, "product", map[string]interface{}{
+		"session_id": sessionID(r),
+		"request_id": r.Context().Value(ctxKeyRequestID{}),
+		//"ad":                fe.chooseAd(r.Context(), p.Categories, log),
+		"user_currency": currentCurrency(r),
+		"show_currency": true,
+		"currencies":    currencies,
+		"product":       product,
+		//"recommendations":   recommendations,
+		"cart_size":       cartSize(*cart.Items),
+		"platform_css":    plat.css,
+		"platform_name":   plat.provider,
+		"is_cymbal_brand": isCymbalBrand,
+		//"deploymentDetails": deploymentDetailsMap,
+	}); err != nil {
+		log.Println(err)
+	}
+}
+
+func (fe *frontendServer) addToCartHandler(w http.ResponseWriter, r *http.Request) {
+	//log := r.Context().Value(ctxKeyLog{}).(logrus.FieldLogger)
+	quantity, _ := strconv.ParseUint(r.FormValue("quantity"), 10, 32)
+	productID := r.FormValue("product_id")
+	if productID == "" || quantity == 0 {
+		renderHTTPError(r, w, errors.New("invalid form input"), http.StatusBadRequest)
+		return
+	}
+	//log.WithField("product", productID).WithField("quantity", quantity).Debug("adding to cart")
+
+	productResponse, err := fe.productCatalogService.GetProductsIdWithResponse(r.Context(), productID)
+	if err != nil {
+		renderHTTPError(r, w, errors.Wrapf(err, "could not retrieve product #%s", productID), http.StatusInternalServerError)
+		return
+	}
+	p := productResponse.JSON200
+
+	quantityInt32 := int32(quantity)
+	userId := sessionID(r)
+
+	body := cartservice_rest_types.AddItemRequest{
+		Item: &cartservice_rest_types.CartItem{
+			ProductId: p.Id,
+			Quantity:  &quantityInt32,
+		},
+		UserId: &userId,
+	}
+	postCartResponse, err := fe.cartService.PostCartWithResponse(r.Context(), body)
+	if err != nil {
+		renderHTTPError(r, w, errors.Wrapf(err, "could not retrieve execute post cart request for product #%s", productID), http.StatusInternalServerError)
+		return
+	}
+	logrus.Debugf("Post cart response %+v", postCartResponse)
+
+	w.Header().Set("location", "/cart")
+	w.WriteHeader(http.StatusFound)
+}
+
+func (fe *frontendServer) emptyCartHandler(w http.ResponseWriter, r *http.Request) {
+	//log := r.Context().Value(ctxKeyLog{}).(logrus.FieldLogger)
+	//log.Debug("emptying cart")
+
+	userId := sessionID(r)
+	if _, err := fe.cartService.DeleteCartUserId(r.Context(), userId); err != nil {
+		renderHTTPError(r, w, errors.Wrap(err, "failed to empty cart"), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("location", "/")
+	w.WriteHeader(http.StatusFound)
+}
+
+func (fe *frontendServer) viewCartHandler(w http.ResponseWriter, r *http.Request) {
+	currencies, err := fe.currencyService.GetSupportedCurrencies(r.Context())
+	if err != nil {
+		renderHTTPError(r, w, errors.Wrapf(err, "error retrieving currencies"), http.StatusInternalServerError)
+		return
+	}
+
+	cartResponse, err := fe.cartService.GetCartUserIdWithResponse(r.Context(), sessionID(r))
+	if err != nil {
+		renderHTTPError(r, w, errors.Wrap(err, "could not retrieve cart"), http.StatusInternalServerError)
+		return
+	}
+
+	cart := cartResponse.JSON200
+
+	type cartItemView struct {
+		Item     productcatalogservice_rest_types.Product
+		Quantity int32
+		Price    *productcatalogservice_rest_types.Money
+	}
+	items := make([]cartItemView, len(*cart.Items))
+	currentCurrencyObj := currentCurrency(r)
+	zeroNanos := int32(0)
+	zeroUnits := int64(0)
+	totalPrice := &productcatalogservice_rest_types.Money{
+		CurrencyCode: &currentCurrencyObj,
+		Nanos:        &zeroNanos,
+		Units:        &zeroUnits,
+	}
+
+	cartItems := *cart.Items
+
+	for i, item := range cartItems {
+		productResponse, err := fe.productCatalogService.GetProductsIdWithResponse(r.Context(), *item.ProductId)
+		if err != nil {
+			renderHTTPError(r, w, errors.Wrapf(err, "could not retrieve product #%s", *item.ProductId), http.StatusInternalServerError)
+			return
+		}
+		p := productResponse.JSON200
+		price, err := fe.currencyService.Convert(r.Context(), *p.PriceUsd.CurrencyCode, *p.PriceUsd.Units, *p.PriceUsd.Nanos, currentCurrency(r))
+		if err != nil {
+			renderHTTPError(r, w, errors.Wrapf(err, "could not convert currency for product #%s", *item.ProductId), http.StatusInternalServerError)
+			return
+		}
+
+		logrus.Debugf("Price is %+v", price)
+
+		multPrice := money.MultiplySlow(price, uint32(*item.Quantity))
+
+		prod := *p
+		quan := *item.Quantity
+
+		items[i] = cartItemView{
+			Item:     prod,
+			Quantity: quan,
+			Price:    multPrice,
+		}
+		totalPrice = money.Must(money.Sum(totalPrice, multPrice))
+	}
+
+	year := time.Now().Year()
+	if err := templates.ExecuteTemplate(w, "cart", map[string]interface{}{
+		"session_id":    sessionID(r),
+		"request_id":    r.Context().Value(ctxKeyRequestID{}),
+		"user_currency": currentCurrency(r),
+		"currencies":    currencies,
+		//"recommendations":   recommendations,
+		"cart_size": cartSize(*cart.Items),
+		//"shipping_cost":     shippingCost,
+		"show_currency":    true,
+		"total_cost":       totalPrice,
+		"items":            items,
+		"expiration_years": []int{year, year + 1, year + 2, year + 3, year + 4},
+		"platform_css":     plat.css,
+		"platform_name":    plat.provider,
+		"is_cymbal_brand":  isCymbalBrand,
+		//"deploymentDetails": deploymentDetailsMap,
+	}); err != nil {
+		log.Println(err)
+	}
+}
+
+func (fe *frontendServer) setCurrencyHandler(w http.ResponseWriter, r *http.Request) {
+	log := r.Context().Value(ctxKeyLog{}).(logrus.FieldLogger)
+	cur := r.FormValue("currency_code")
+	log.WithField("curr.new", cur).WithField("curr.old", currentCurrency(r)).
+		Debug("setting currency")
+
+	if cur != "" {
+		http.SetCookie(w, &http.Cookie{
+			Name:   cookieCurrency,
+			Value:  cur,
+			MaxAge: cookieMaxAge,
+		})
+	}
+	referer := r.Header.Get("referer")
+	if referer == "" {
+		referer = "/"
+	}
+	w.Header().Set("Location", referer)
+	w.WriteHeader(http.StatusFound)
 }
 
 func (plat *platformDetails) setPlatformDetails(env string) {
@@ -174,9 +355,11 @@ func (plat *platformDetails) setPlatformDetails(env string) {
 	}
 }
 
-func renderMoney(money *Money) string {
-	currencyLogo := renderCurrencyLogo(money.CurrencyCode)
-	return fmt.Sprintf("%s%d.%02d", currencyLogo, money.Units, money.Nanos/10000000)
+func renderMoney(money productcatalogservice_rest_types.Money) string {
+	currencyLogo := renderCurrencyLogo(*money.CurrencyCode)
+	units := *money.Units
+	nanos := *money.Nanos
+	return fmt.Sprintf("%s%d.%02d", currencyLogo, units, nanos/10000000)
 }
 
 func sessionID(r *http.Request) string {
@@ -237,4 +420,12 @@ func renderHTTPError(r *http.Request, w http.ResponseWriter, err error, code int
 	}); templateErr != nil {
 		log.Println(templateErr)
 	}
+}
+
+func cartSize(c []cartservice_rest_types.CartItem) int {
+	cartSize := 0
+	for _, item := range c {
+		cartSize += int(*item.Quantity)
+	}
+	return cartSize
 }
