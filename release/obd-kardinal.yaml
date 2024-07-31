@@ -26,10 +26,27 @@ spec:
                 - all
             privileged: false
             readOnlyRootFilesystem: true
-          image: leoporoli/newobd-cartservice:0.0.1
+          image: leoporoli/newobd-cartservice:0.0.2
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8090
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8090
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+            successThreshold: 1
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8090
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
           env:
             - name: PORT
               value: "8090"
@@ -86,10 +103,26 @@ spec:
     spec:
       containers:
         - name: server
-          image: leoporoli/newobd-frontend:0.0.1
+          image: leoporoli/newobd-frontend:0.0.2
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
+          readinessProbe:
+            initialDelaySeconds: 10
+            httpGet:
+              path: "/_healthz"
+              port: 8080
+              httpHeaders:
+                - name: "Cookie"
+                  value: "shop_session-id=x-readiness-probe"
+          livenessProbe:
+            initialDelaySeconds: 10
+            httpGet:
+              path: "/_healthz"
+              port: 8080
+              httpHeaders:
+                - name: "Cookie"
+                  value: "shop_session-id=x-liveness-probe"
           env:
             - name: ADDRESS
               value: ":8080"
@@ -214,10 +247,27 @@ spec:
       terminationGracePeriodSeconds: 5
       containers:
         - name: server
-          image: leoporoli/newobd-productcatalogservice:0.0.1
+          image: leoporoli/newobd-productcatalogservice:0.0.2
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8070
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8070
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+            successThreshold: 1
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8070
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
           env:
             - name: PORT
               value: "8070"
