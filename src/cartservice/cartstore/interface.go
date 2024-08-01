@@ -6,7 +6,7 @@ import (
 )
 
 type CartStore interface {
-	AddItem(ctx context.Context, userID, productID string, quantity int32) error
+	AddItem(ctx context.Context, userID, productID string, quantity int32, isAPresent bool) error
 	EmptyCart(ctx context.Context, userID string) error
 	GetCart(ctx context.Context, userID string) (*cartservice_rest_types.Cart, error)
 }

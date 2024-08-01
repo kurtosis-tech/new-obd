@@ -30,7 +30,7 @@ func (s Server) GetHealth(ctx context.Context, request cartservice_server_rest_s
 }
 
 func (s Server) PostCart(ctx context.Context, object cartservice_server_rest_server.PostCartRequestObject) (cartservice_server_rest_server.PostCartResponseObject, error) {
-	if err := s.Store.AddItem(ctx, *object.Body.UserId, *object.Body.Item.ProductId, *object.Body.Item.Quantity); err != nil {
+	if err := s.Store.AddItem(ctx, *object.Body.UserId, *object.Body.Item.ProductId, *object.Body.Item.Quantity, *object.Body.Item.IsAPresent); err != nil {
 		return nil, err
 	}
 	return cartservice_server_rest_server.PostCart200JSONResponse{}, nil

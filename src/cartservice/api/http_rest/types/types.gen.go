@@ -28,8 +28,9 @@ type Cart struct {
 
 // CartItem defines model for CartItem.
 type CartItem struct {
-	ProductId *string `json:"product_id,omitempty"`
-	Quantity  *int32  `json:"quantity,omitempty"`
+	IsAPresent *bool   `json:"is_a_present,omitempty"`
+	ProductId  *string `json:"product_id,omitempty"`
+	Quantity   *int32  `json:"quantity,omitempty"`
 }
 
 // HealthResponse defines model for HealthResponse.

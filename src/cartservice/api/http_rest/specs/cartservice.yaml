@@ -161,3 +161,5 @@ components:
         quantity:
           type: integer
           format: int32
+        is_a_present:
+          type: boolean
