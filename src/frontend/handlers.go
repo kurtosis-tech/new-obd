@@ -151,7 +151,7 @@ func (fe *frontendServer) productHandler(w http.ResponseWriter, r *http.Request)
 	experimentalFeaturesResponse, err := fe.cartService.GetExperimentalFeaturesWithResponse(r.Context())
 	if err != nil {
 		logrus.Debugf("It was not possible to get the experimental features from cart service. Error: %s", err.Error())
-	} else {
+	} else if experimentalFeaturesResponse.StatusCode() == 200 {
 		experimentalFeatures := experimentalFeaturesResponse.JSON200
 		isPresentFeature = *experimentalFeatures.ProductsPresent
 	}
@@ -273,6 +273,15 @@ func (fe *frontendServer) viewCartHandler(w http.ResponseWriter, r *http.Request
 
 	cartItems := *cart.Items
 
+	var isPresentFeature bool
+	experimentalFeaturesResponse, err := fe.cartService.GetExperimentalFeaturesWithResponse(r.Context())
+	if err != nil {
+		logrus.Debugf("It was not possible to get the experimental features from cart service. Error: %s", err.Error())
+	} else if experimentalFeaturesResponse.StatusCode() == 200 {
+		experimentalFeatures := experimentalFeaturesResponse.JSON200
+		isPresentFeature = *experimentalFeatures.ProductsPresent
+	}
+
 	for i, item := range cartItems {
 		productResponse, err := fe.productCatalogService.GetProductsIdWithResponse(r.Context(), *item.ProductId)
 		if err != nil {
@@ -292,14 +301,18 @@ func (fe *frontendServer) viewCartHandler(w http.ResponseWriter, r *http.Request
 
 		prod := *p
 		quan := *item.Quantity
-		isAPresent := *item.IsAPresent
 
 		items[i] = cartItemView{
-			Item:       prod,
-			Quantity:   quan,
-			IsAPresent: isAPresent,
-			Price:      multPrice,
+			Item:     prod,
+			Quantity: quan,
+			Price:    multPrice,
 		}
+
+		if isPresentFeature {
+			isAPresent := *item.IsAPresent
+			items[i].IsAPresent = isAPresent
+		}
+
 		totalPrice = money.Must(money.Sum(totalPrice, multPrice))
 	}
 
