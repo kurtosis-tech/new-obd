@@ -26,7 +26,7 @@ spec:
                 - all
             privileged: false
             readOnlyRootFilesystem: true
-          image: leoporoli/newobd-cartservice:0.0.3
+          image: leoporoli/newobd-cartservice:dev
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8090
@@ -105,7 +105,7 @@ spec:
     spec:
       containers:
         - name: server
-          image: leoporoli/newobd-frontend:0.0.3
+          image: leoporoli/newobd-frontend:dev
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080

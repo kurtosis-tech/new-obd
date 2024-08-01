@@ -18,4 +18,4 @@ test:
 
 .PHONY: docker
 docker:
-	@docker build -t cartservice:latest .
+	@docker build -t leoporoli/newobd-cartservice:dev .

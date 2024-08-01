@@ -147,13 +147,14 @@ func (fe *frontendServer) productHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	var isPresentFeature bool
 	experimentalFeaturesResponse, err := fe.cartService.GetExperimentalFeaturesWithResponse(r.Context())
 	if err != nil {
-		renderHTTPError(r, w, errors.Wrap(err, "could not retrieve the cart service experimental features"), http.StatusInternalServerError)
-		return
+		logrus.Debugf("It was not possible to get the experimental features from cart service. Error: %s", err.Error())
+	} else {
+		experimentalFeatures := experimentalFeaturesResponse.JSON200
+		isPresentFeature = *experimentalFeatures.ProductsPresent
 	}
-	experimentalFeatures := experimentalFeaturesResponse.JSON200
-	isPresentFeature := &experimentalFeatures.ProductsPresent
 
 	product := struct {
 		Item  productcatalogservice_rest_types.Product
