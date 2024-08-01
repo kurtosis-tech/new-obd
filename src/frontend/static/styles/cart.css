@@ -66,6 +66,11 @@
     border-radius: 20% 0 20% 20%;
 }
 
+.cart-summary-item-row img.present{
+    width: 40px;
+    height: 40px;
+}
+
 .cart-summary-item-row-item-id-row {
     font-size: 12px;
     color: #5C6063;

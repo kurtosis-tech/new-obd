@@ -174,6 +174,7 @@ func (fe *frontendServer) productHandler(w http.ResponseWriter, r *http.Request)
 func (fe *frontendServer) addToCartHandler(w http.ResponseWriter, r *http.Request) {
 	quantity, _ := strconv.ParseUint(r.FormValue("quantity"), 10, 32)
 	productID := r.FormValue("product_id")
+	isAPresent := r.FormValue("present")
 	if productID == "" || quantity == 0 {
 		renderHTTPError(r, w, errors.New("invalid form input"), http.StatusBadRequest)
 		return
@@ -191,10 +192,16 @@ func (fe *frontendServer) addToCartHandler(w http.ResponseWriter, r *http.Reques
 	quantityInt32 := int32(quantity)
 	userId := sessionID(r)
 
+	var isAPresentBool bool
+	if isAPresent == "on" {
+		isAPresentBool = true
+	}
+
 	body := cartservice_rest_types.AddItemRequest{
 		Item: &cartservice_rest_types.CartItem{
-			ProductId: p.Id,
-			Quantity:  &quantityInt32,
+			ProductId:  p.Id,
+			Quantity:   &quantityInt32,
+			IsAPresent: &isAPresentBool,
 		},
 		UserId: &userId,
 	}
