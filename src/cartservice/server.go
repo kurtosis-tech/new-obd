@@ -29,6 +29,17 @@ func (s Server) GetHealth(ctx context.Context, request cartservice_server_rest_s
 	return cartservice_server_rest_server.GetHealth200JSONResponse(response), nil
 }
 
+func (s Server) GetExperimentalFeatures(ctx context.Context, request cartservice_server_rest_server.GetExperimentalFeaturesRequestObject) (cartservice_server_rest_server.GetExperimentalFeaturesResponseObject, error) {
+
+	isPresentFeatureAvailable := true
+
+	response := cartservice_rest_types.ExperimentalFeatures{
+		ProductsPresent: &isPresentFeatureAvailable,
+	}
+
+	return cartservice_server_rest_server.GetExperimentalFeatures200JSONResponse(response), nil
+}
+
 func (s Server) PostCart(ctx context.Context, object cartservice_server_rest_server.PostCartRequestObject) (cartservice_server_rest_server.PostCartResponseObject, error) {
 	if err := s.Store.AddItem(ctx, *object.Body.UserId, *object.Body.Item.ProductId, *object.Body.Item.Quantity, *object.Body.Item.IsAPresent); err != nil {
 		return nil, err

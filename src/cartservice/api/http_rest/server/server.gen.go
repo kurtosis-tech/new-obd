@@ -33,6 +33,9 @@ type ServerInterface interface {
 	// Get cart
 	// (GET /cart/{user_id})
 	GetCartUserId(ctx echo.Context, userId UserId) error
+	// Experimental features
+	// (GET /experimental-features)
+	GetExperimentalFeatures(ctx echo.Context) error
 	// Health check endpoint
 	// (GET /health)
 	GetHealth(ctx echo.Context) error
@@ -84,6 +87,15 @@ func (w *ServerInterfaceWrapper) GetCartUserId(ctx echo.Context) error {
 	return err
 }
 
+// GetExperimentalFeatures converts echo context to params.
+func (w *ServerInterfaceWrapper) GetExperimentalFeatures(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.GetExperimentalFeatures(ctx)
+	return err
+}
+
 // GetHealth converts echo context to params.
 func (w *ServerInterfaceWrapper) GetHealth(ctx echo.Context) error {
 	var err error
@@ -124,6 +136,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.POST(baseURL+"/cart", wrapper.PostCart)
 	router.DELETE(baseURL+"/cart/:user_id", wrapper.DeleteCartUserId)
 	router.GET(baseURL+"/cart/:user_id", wrapper.GetCartUserId)
+	router.GET(baseURL+"/experimental-features", wrapper.GetExperimentalFeatures)
 	router.GET(baseURL+"/health", wrapper.GetHealth)
 
 }
@@ -217,6 +230,34 @@ func (response GetCartUserIddefaultJSONResponse) VisitGetCartUserIdResponse(w ht
 	return json.NewEncoder(w).Encode(response.Body)
 }
 
+type GetExperimentalFeaturesRequestObject struct {
+}
+
+type GetExperimentalFeaturesResponseObject interface {
+	VisitGetExperimentalFeaturesResponse(w http.ResponseWriter) error
+}
+
+type GetExperimentalFeatures200JSONResponse ExperimentalFeatures
+
+func (response GetExperimentalFeatures200JSONResponse) VisitGetExperimentalFeaturesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetExperimentalFeaturesdefaultJSONResponse struct {
+	Body       ResponseInfo
+	StatusCode int
+}
+
+func (response GetExperimentalFeaturesdefaultJSONResponse) VisitGetExperimentalFeaturesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
 type GetHealthRequestObject struct {
 }
 
@@ -256,6 +297,9 @@ type StrictServerInterface interface {
 	// Get cart
 	// (GET /cart/{user_id})
 	GetCartUserId(ctx context.Context, request GetCartUserIdRequestObject) (GetCartUserIdResponseObject, error)
+	// Experimental features
+	// (GET /experimental-features)
+	GetExperimentalFeatures(ctx context.Context, request GetExperimentalFeaturesRequestObject) (GetExperimentalFeaturesResponseObject, error)
 	// Health check endpoint
 	// (GET /health)
 	GetHealth(ctx context.Context, request GetHealthRequestObject) (GetHealthResponseObject, error)
@@ -352,6 +396,29 @@ func (sh *strictHandler) GetCartUserId(ctx echo.Context, userId UserId) error {
 	return nil
 }
 
+// GetExperimentalFeatures operation middleware
+func (sh *strictHandler) GetExperimentalFeatures(ctx echo.Context) error {
+	var request GetExperimentalFeaturesRequestObject
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.GetExperimentalFeatures(ctx.Request().Context(), request.(GetExperimentalFeaturesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetExperimentalFeatures")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(GetExperimentalFeaturesResponseObject); ok {
+		return validResponse.VisitGetExperimentalFeaturesResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
 // GetHealth operation middleware
 func (sh *strictHandler) GetHealth(ctx echo.Context) error {
 	var request GetHealthRequestObject
@@ -378,20 +445,22 @@ func (sh *strictHandler) GetHealth(ctx echo.Context) error {
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
+	"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",
+	"5+Lkr5gMAAA=",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

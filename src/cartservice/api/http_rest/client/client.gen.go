@@ -101,6 +101,9 @@ type ClientInterface interface {
 	// GetCartUserId request
 	GetCartUserId(ctx context.Context, userId UserId, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// GetExperimentalFeatures request
+	GetExperimentalFeatures(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// GetHealth request
 	GetHealth(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
@@ -143,6 +146,18 @@ func (c *Client) DeleteCartUserId(ctx context.Context, userId UserId, reqEditors
 
 func (c *Client) GetCartUserId(ctx context.Context, userId UserId, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetCartUserIdRequest(c.Server, userId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetExperimentalFeatures(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetExperimentalFeaturesRequest(c.Server)
 	if err != nil {
 		return nil, err
 	}
@@ -273,6 +288,33 @@ func NewGetCartUserIdRequest(server string, userId UserId) (*http.Request, error
 	return req, nil
 }
 
+// NewGetExperimentalFeaturesRequest generates requests for GetExperimentalFeatures
+func NewGetExperimentalFeaturesRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/experimental-features")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewGetHealthRequest generates requests for GetHealth
 func NewGetHealthRequest(server string) (*http.Request, error) {
 	var err error
@@ -354,6 +396,9 @@ type ClientWithResponsesInterface interface {
 	// GetCartUserIdWithResponse request
 	GetCartUserIdWithResponse(ctx context.Context, userId UserId, reqEditors ...RequestEditorFn) (*GetCartUserIdResponse, error)
 
+	// GetExperimentalFeaturesWithResponse request
+	GetExperimentalFeaturesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetExperimentalFeaturesResponse, error)
+
 	// GetHealthWithResponse request
 	GetHealthWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetHealthResponse, error)
 }
@@ -427,6 +472,29 @@ func (r GetCartUserIdResponse) StatusCode() int {
 	return 0
 }
 
+type GetExperimentalFeaturesResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ExperimentalFeatures
+	JSONDefault  *NotOk
+}
+
+// Status returns HTTPResponse.Status
+func (r GetExperimentalFeaturesResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetExperimentalFeaturesResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type GetHealthResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -483,6 +551,15 @@ func (c *ClientWithResponses) GetCartUserIdWithResponse(ctx context.Context, use
 		return nil, err
 	}
 	return ParseGetCartUserIdResponse(rsp)
+}
+
+// GetExperimentalFeaturesWithResponse request returning *GetExperimentalFeaturesResponse
+func (c *ClientWithResponses) GetExperimentalFeaturesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetExperimentalFeaturesResponse, error) {
+	rsp, err := c.GetExperimentalFeatures(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetExperimentalFeaturesResponse(rsp)
 }
 
 // GetHealthWithResponse request returning *GetHealthResponse
@@ -576,6 +653,39 @@ func ParseGetCartUserIdResponse(rsp *http.Response) (*GetCartUserIdResponse, err
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest Cart
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest NotOk
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetExperimentalFeaturesResponse parses an HTTP response from a GetExperimentalFeaturesWithResponse call
+func ParseGetExperimentalFeaturesResponse(rsp *http.Response) (*GetExperimentalFeaturesResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetExperimentalFeaturesResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ExperimentalFeatures
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}

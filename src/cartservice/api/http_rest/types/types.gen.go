@@ -33,6 +33,11 @@ type CartItem struct {
 	Quantity   *int32  `json:"quantity,omitempty"`
 }
 
+// ExperimentalFeatures defines model for ExperimentalFeatures.
+type ExperimentalFeatures struct {
+	ProductsPresent *bool `json:"products_present,omitempty"`
+}
+
 // HealthResponse defines model for HealthResponse.
 type HealthResponse struct {
 	Status    *string    `json:"status,omitempty"`
