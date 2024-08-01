@@ -239,9 +239,10 @@ func (fe *frontendServer) viewCartHandler(w http.ResponseWriter, r *http.Request
 	cart := cartResponse.JSON200
 
 	type cartItemView struct {
-		Item     productcatalogservice_rest_types.Product
-		Quantity int32
-		Price    *productcatalogservice_rest_types.Money
+		Item       productcatalogservice_rest_types.Product
+		Quantity   int32
+		IsAPresent bool
+		Price      *productcatalogservice_rest_types.Money
 	}
 	items := make([]cartItemView, len(*cart.Items))
 	currentCurrencyObj := currentCurrency(r)
@@ -274,11 +275,13 @@ func (fe *frontendServer) viewCartHandler(w http.ResponseWriter, r *http.Request
 
 		prod := *p
 		quan := *item.Quantity
+		isAPresent := *item.IsAPresent
 
 		items[i] = cartItemView{
-			Item:     prod,
-			Quantity: quan,
-			Price:    multPrice,
+			Item:       prod,
+			Quantity:   quan,
+			IsAPresent: isAPresent,
+			Price:      multPrice,
 		}
 		totalPrice = money.Must(money.Sum(totalPrice, multPrice))
 	}
