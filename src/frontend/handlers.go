@@ -198,7 +198,7 @@ func (fe *frontendServer) addToCartHandler(w http.ResponseWriter, r *http.Reques
 		},
 		UserId: &userId,
 	}
-	postCartResponse, err := fe.cartService.PostCartWithResponse(r.Context(), body)
+	postCartResponse, err := fe.cartService.PostCartWithResponse(r.Context(), body, setKardinalReqEditorFcn)
 	logrus.Infof("Post cart response status code: %d", postCartResponse.StatusCode())
 	if postCartResponse.StatusCode() != 200 || err != nil {
 		renderHTTPError(r, w, errors.Wrapf(err, "could not retrieve execute post cart request for product #%s", productID), http.StatusInternalServerError)
@@ -256,7 +256,7 @@ func (fe *frontendServer) viewCartHandler(w http.ResponseWriter, r *http.Request
 	cartItems := *cart.Items
 
 	for i, item := range cartItems {
-		productResponse, err := fe.productCatalogService.GetProductsIdWithResponse(r.Context(), *item.ProductId)
+		productResponse, err := fe.productCatalogService.GetProductsIdWithResponse(r.Context(), *item.ProductId, setKardinalReqEditorFcn)
 		if err != nil {
 			renderHTTPError(r, w, errors.Wrapf(err, "could not retrieve product #%s", *item.ProductId), http.StatusInternalServerError)
 			return
