@@ -83,6 +83,8 @@ github.com/kurtosis-tech/new-obd/src/cartservice v0.0.0-20240731034219-680be2207
 github.com/kurtosis-tech/new-obd/src/cartservice v0.0.0-20240731034219-680be220772b/go.mod h1:XtjDbz/OuRoYbStiAXkZOTZrLbXl4G1EqIM8O/zdI7M=
 github.com/kurtosis-tech/new-obd/src/cartservice v0.0.0-20240801133943-e3d868ed94ae h1:AblHB+q/qsiGMCnoy9U2Fp8X2M+GUvhmob6Zaqi5oh0=
 github.com/kurtosis-tech/new-obd/src/cartservice v0.0.0-20240801133943-e3d868ed94ae/go.mod h1:XtjDbz/OuRoYbStiAXkZOTZrLbXl4G1EqIM8O/zdI7M=
+github.com/kurtosis-tech/new-obd/src/cartservice v0.0.0-20240801144151-c12fae1940c6 h1:zzpvEq7XW722L4eBxOVzpP+wsIchGTpSVLcvWyYHqhQ=
+github.com/kurtosis-tech/new-obd/src/cartservice v0.0.0-20240801144151-c12fae1940c6/go.mod h1:XtjDbz/OuRoYbStiAXkZOTZrLbXl4G1EqIM8O/zdI7M=
 github.com/kurtosis-tech/new-obd/src/currencyexternalapi v0.0.0-20240731052808-7a2597c080ba h1:O2higo0m5rY8ZI0v1ioyF2XSaVPLVX7Z3FiC0IDzKPk=
 github.com/kurtosis-tech/new-obd/src/currencyexternalapi v0.0.0-20240731052808-7a2597c080ba/go.mod h1:RofAgi1WBxLMEGQvNe0grFm0NSOFtHaeWtccTWh7Fss=
 github.com/kurtosis-tech/new-obd/src/productcatalogservice v0.0.0-20240731052808-7a2597c080ba h1:oppbrUS9NXh+OyuZmoRanCuiJjJNqApXxxA3GtfNQvE=

@@ -147,6 +147,14 @@ func (fe *frontendServer) productHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	experimentalFeaturesResponse, err := fe.cartService.GetExperimentalFeaturesWithResponse(r.Context())
+	if err != nil {
+		renderHTTPError(r, w, errors.Wrap(err, "could not retrieve the cart service experimental features"), http.StatusInternalServerError)
+		return
+	}
+	experimentalFeatures := experimentalFeaturesResponse.JSON200
+	isPresentFeature := &experimentalFeatures.ProductsPresent
+
 	product := struct {
 		Item  productcatalogservice_rest_types.Product
 		Price *productcatalogservice_rest_types.Money
@@ -161,10 +169,11 @@ func (fe *frontendServer) productHandler(w http.ResponseWriter, r *http.Request)
 		"currencies":    currencies,
 		"product":       product,
 		//"recommendations":   recommendations,
-		"cart_size":       cartSize(*cart.Items),
-		"platform_css":    plat.css,
-		"platform_name":   plat.provider,
-		"is_cymbal_brand": isCymbalBrand,
+		"cart_size":          cartSize(*cart.Items),
+		"platform_css":       plat.css,
+		"platform_name":      plat.provider,
+		"is_cymbal_brand":    isCymbalBrand,
+		"is_present_feature": isPresentFeature,
 		//"deploymentDetails": deploymentDetailsMap,
 	}); err != nil {
 		log.Println(err)
