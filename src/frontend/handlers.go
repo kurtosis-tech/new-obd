@@ -220,7 +220,7 @@ func (fe *frontendServer) addToCartHandler(w http.ResponseWriter, r *http.Reques
 		renderHTTPError(r, w, errors.Wrapf(err, "could not retrieve execute post cart request for product #%s", productID), http.StatusInternalServerError)
 		return
 	}
-	logrus.Debugf("Post cart response %+v", postCartResponse)
+	logrus.Infof("Post cart response status code: %d", postCartResponse.StatusCode())
 
 	w.Header().Set("location", "/cart")
 	w.WriteHeader(http.StatusFound)
