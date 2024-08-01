@@ -69,7 +69,6 @@ metadata:
     app: cartservice
     version: v1
   annotations:
-    kardinal.dev.service/stateful: "true"
     kardinal.dev.service/dependencies: "postgres:tcp"
 spec:
   type: ClusterIP
@@ -220,6 +219,16 @@ metadata:
   labels:
     app: postgres
     version: v1
+  annotations:
+    kardinal.dev.service/stateful: "true"
+    kardinal.dev/plugins: |
+      - name: github.com/kurtosis-tech/postgres-seed-plugin
+        args:
+          seed_script: ""
+          db_name: "cart"
+          db_user: "postgresuser"
+          db_password: "postgrespass"
+
 spec:
   type: ClusterIP
   ports:
