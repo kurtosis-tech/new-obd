@@ -5,6 +5,7 @@ import (
 	cartservice_server_rest_server "github.com/kurtosis-tech/new-obd/src/cartservice/api/http_rest/server"
 	cartservice_rest_types "github.com/kurtosis-tech/new-obd/src/cartservice/api/http_rest/types"
 	"github.com/kurtosis-tech/new-obd/src/cartservice/cartstore"
+	"github.com/sirupsen/logrus"
 	"time"
 )
 
@@ -30,7 +31,9 @@ func (s Server) GetHealth(ctx context.Context, request cartservice_server_rest_s
 }
 
 func (s Server) PostCart(ctx context.Context, object cartservice_server_rest_server.PostCartRequestObject) (cartservice_server_rest_server.PostCartResponseObject, error) {
+	logrus.Infof("Post cart request - UserID: %s, ProductID: %s, Quantity: %d", *object.Body.UserId, *object.Body.Item.ProductId, *object.Body.Item.Quantity)
 	if err := s.Store.AddItem(ctx, *object.Body.UserId, *object.Body.Item.ProductId, *object.Body.Item.Quantity); err != nil {
+		logrus.Infof("An error occurred storing the item in the store. Error: %s", err.Error())
 		return nil, err
 	}
 	return cartservice_server_rest_server.PostCart200JSONResponse{}, nil

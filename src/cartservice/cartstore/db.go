@@ -90,6 +90,7 @@ func (db *Db) AddItem(ctx context.Context, userID, productID string, quantity in
 
 	result := db.db.WithContext(ctx).Create(item)
 	if result.Error != nil {
+		logrus.Infof("An error occurred creating the item in the dB. Error: %s", result.Error.Error())
 		return errors.Wrap(result.Error, fmt.Sprintf("An internal error has occurred creating the item '%+v'", item))
 	}
 	logrus.Debugf("Success! Stored item %+v in database", item)
