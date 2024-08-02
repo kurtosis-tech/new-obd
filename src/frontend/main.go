@@ -14,8 +14,7 @@ import (
 )
 
 const (
-	name    = "frontend"
-	version = "1.0.0"
+	name = "frontend"
 
 	defaultCurrency = "USD"
 	cookieMaxAge    = 60 * 60 * 48
