@@ -1,4 +1,4 @@
-package freecurrency
+package jsdelivr
 
 import (
 	"encoding/json"
@@ -10,103 +10,60 @@ import (
 )
 
 const (
-	apiBaseURL              = "https://api.freecurrencyapi.com/v1/"
-	apiKeyQueryParamKey     = "apikey"
-	currenciesQueryParamKey = "currencies"
-	currenciesEndpointPath  = "currencies"
-	latestRatesEndpointPath = "latest"
+	apiBaseURL              = "https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/"
+	currenciesEndpointPath  = "currencies.json"
+	latestRatesEndpointPath = "currencies/usd.json"
 )
 
-type CurrenciesResponse struct {
-	Data map[string]Currency `json:"data"`
-}
-
-type Currency struct {
-	Symbol        string `json:"symbol"`
-	Name          string `json:"name"`
-	SymbolNative  string `json:"symbol_native"`
-	DecimalDigits int    `json:"decimal_digits"`
-	Rounding      int    `json:"rounding"`
-	Code          string `json:"code"`
-	NamePlural    string `json:"name_plural"`
-	Type          string `json:"type"`
-}
-
 type LatestRatesResponse struct {
-	Data LatestRates `json:"data"`
+	Date string             `json:"date"`
+	Usd  map[string]float64 `json:"usd"`
 }
 
-type LatestRates map[string]float64
+var JsdelivrAPIConfig = config.NewCurrencyAPIConfig(
+	// saving the response for a week because app.freecurrencyapi.com has a low limit
+	// and this is a demo project, it's not important to have the latest data
+	5*time.Second,
+	getGetCurrenciesURLFunc,
+	getGetLatestRatesURLFunc,
+	getCurrencyListFromResponseFunc,
+	getLatestRatesFromResponse,
+)
 
-func GetFreeCurrencyAPIConfig(apiKey string) *config.CurrencyAPIConfig {
-	var FreeCurrencyAPIConfig = config.NewCurrencyAPIConfig(
-		// saving the response for a week because app.freecurrencyapi.com has a low limit
-		// and this is a demo project, it's not important to have the latest data
-		168*time.Hour,
-		getGetCurrenciesURLFunc(apiKey),
-		getGetLatestRatesURLFunc(apiKey),
-		getCurrencyListFromResponseFunc,
-		getLatestRatesFromResponse,
-	)
-	return FreeCurrencyAPIConfig
-}
+func getGetCurrenciesURLFunc() (*url.URL, error) {
 
-func getGetCurrenciesURLFunc(apiKey string) func() (*url.URL, error) {
+	currenciesEndpointUrlStr := fmt.Sprintf("%s%s", apiBaseURL, currenciesEndpointPath)
 
-	getCurrenciesURLFunc := func() (*url.URL, error) {
-		currenciesEndpointUrlStr := fmt.Sprintf("%s%s", apiBaseURL, currenciesEndpointPath)
-
-		currenciesEndpointUrl, err := url.Parse(currenciesEndpointUrlStr)
-		if err != nil {
-			return nil, err
-		}
-
-		currenciesEndpointQuery := currenciesEndpointUrl.Query()
-
-		currenciesEndpointQuery.Set(apiKeyQueryParamKey, apiKey)
-
-		currenciesEndpointUrl.RawQuery = currenciesEndpointQuery.Encode()
-
-		return currenciesEndpointUrl, nil
+	currenciesEndpointUrl, err := url.Parse(currenciesEndpointUrlStr)
+	if err != nil {
+		return nil, err
 	}
 
-	return getCurrenciesURLFunc
+	return currenciesEndpointUrl, nil
 }
 
-func getGetLatestRatesURLFunc(apiKey string) func(string, string) (*url.URL, error) {
+func getGetLatestRatesURLFunc(from string, to string) (*url.URL, error) {
 
-	getLatestRatesURLFunc := func(from string, to string) (*url.URL, error) {
-		latestRatesEndpointUrlStr := fmt.Sprintf("%s%s", apiBaseURL, latestRatesEndpointPath)
+	latestRatesEndpointUrlStr := fmt.Sprintf("%s%s", apiBaseURL, latestRatesEndpointPath)
 
-		latestRatesEndpointUrl, err := url.Parse(latestRatesEndpointUrlStr)
-		if err != nil {
-			return nil, err
-		}
-
-		latestRatesEndpointQuery := latestRatesEndpointUrl.Query()
-
-		currenciesQueryParamValue := strings.Join([]string{strings.ToUpper(from), strings.ToUpper(to)}, ",")
-
-		latestRatesEndpointQuery.Set(apiKeyQueryParamKey, apiKey)
-		latestRatesEndpointQuery.Set(currenciesQueryParamKey, currenciesQueryParamValue)
-
-		latestRatesEndpointUrl.RawQuery = latestRatesEndpointQuery.Encode()
-
-		return latestRatesEndpointUrl, nil
+	latestRatesEndpointUrl, err := url.Parse(latestRatesEndpointUrlStr)
+	if err != nil {
+		return nil, err
 	}
 
-	return getLatestRatesURLFunc
+	return latestRatesEndpointUrl, nil
 }
 
 func getCurrencyListFromResponseFunc(httpResponseBodyBytes []byte) ([]string, error) {
 	currencyCodes := []string{}
-	currenciesResp := &CurrenciesResponse{}
+	currenciesResp := &map[string]string{}
 	if err := json.Unmarshal(httpResponseBodyBytes, currenciesResp); err != nil {
 		return currencyCodes, err
 	}
 
-	for code := range currenciesResp.Data {
-		currencyCodes = append(currencyCodes, code)
+	for code := range *currenciesResp {
+		upperCode := strings.ToUpper(code)
+		currencyCodes = append(currencyCodes, upperCode)
 	}
 	return currencyCodes, nil
 }
@@ -118,6 +75,14 @@ func getLatestRatesFromResponse(httpResponseBodyBytes []byte) (map[string]float6
 	if err := json.Unmarshal(httpResponseBodyBytes, latestRatesResp); err != nil {
 		return data, err
 	}
-	data = latestRatesResp.Data
-	return data, nil
+	data = latestRatesResp.Usd
+	dataUpperCode := map[string]float64{}
+	for code, rate := range data {
+		upperCode := strings.ToUpper(code)
+		dataUpperCode[upperCode] = rate
+	}
+
+	//add USD
+	dataUpperCode["USD"] = 1
+	return dataUpperCode, nil
 }

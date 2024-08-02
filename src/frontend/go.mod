@@ -4,6 +4,8 @@ go 1.21.9
 
 toolchain go1.22.4
 
+replace github.com/kurtosis-tech/new-obd/src/currencyexternalapi => ../currencyexternalapi
+
 require (
 	github.com/google/uuid v1.5.0
 	github.com/gorilla/mux v1.8.1
