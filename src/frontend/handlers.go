@@ -49,6 +49,10 @@ var (
 	plat platformDetails
 )
 
+const (
+	userID = "0494c5e0-dde0-48fa-a6d8-f7962f5476bf"
+)
+
 func (fe *frontendServer) homeHandler(w http.ResponseWriter, r *http.Request) {
 
 	currencies, err := fe.currencyService.GetSupportedCurrencies(r.Context())
@@ -66,7 +70,7 @@ func (fe *frontendServer) homeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	productsList := productResponse.JSON200
 
-	cartResponse, err := fe.cartService.GetCartUserIdWithResponse(r.Context(), sessionID(r), setKardinalReqEditorFcn)
+	cartResponse, err := fe.cartService.GetCartUserIdWithResponse(r.Context(), userID, setKardinalReqEditorFcn)
 	if err != nil {
 		renderHTTPError(r, w, errors.Wrap(err, "could not retrieve cart"), http.StatusInternalServerError)
 		return
@@ -133,7 +137,7 @@ func (fe *frontendServer) productHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	cartResponse, err := fe.cartService.GetCartUserIdWithResponse(r.Context(), sessionID(r), setKardinalReqEditorFcn)
+	cartResponse, err := fe.cartService.GetCartUserIdWithResponse(r.Context(), userID, setKardinalReqEditorFcn)
 	if err != nil {
 		renderHTTPError(r, w, errors.Wrap(err, "could not retrieve cart"), http.StatusInternalServerError)
 		return
@@ -189,7 +193,7 @@ func (fe *frontendServer) addToCartHandler(w http.ResponseWriter, r *http.Reques
 	p := productResponse.JSON200
 
 	quantityInt32 := int32(quantity)
-	userId := sessionID(r)
+	userId := userID
 
 	body := cartservice_rest_types.AddItemRequest{
 		Item: &cartservice_rest_types.CartItem{
@@ -212,7 +216,7 @@ func (fe *frontendServer) addToCartHandler(w http.ResponseWriter, r *http.Reques
 func (fe *frontendServer) emptyCartHandler(w http.ResponseWriter, r *http.Request) {
 	setKardinalReqEditorFcn := getSetTraceIdHeaderRequestEditorFcn(r)
 
-	userId := sessionID(r)
+	userId := userID
 	if _, err := fe.cartService.DeleteCartUserId(r.Context(), userId, setKardinalReqEditorFcn); err != nil {
 		renderHTTPError(r, w, errors.Wrap(err, "failed to empty cart"), http.StatusInternalServerError)
 		return
@@ -230,7 +234,7 @@ func (fe *frontendServer) viewCartHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	cartResponse, err := fe.cartService.GetCartUserIdWithResponse(r.Context(), sessionID(r), setKardinalReqEditorFcn)
+	cartResponse, err := fe.cartService.GetCartUserIdWithResponse(r.Context(), userID, setKardinalReqEditorFcn)
 	if err != nil {
 		renderHTTPError(r, w, errors.Wrap(err, "could not retrieve cart"), http.StatusInternalServerError)
 		return
