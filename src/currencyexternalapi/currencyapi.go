@@ -3,7 +3,7 @@ package currencyexternalapi
 import (
 	"context"
 	"encoding/json"
-	"github.com/kurtosis-tech/online-boutique-demo/src/currencyexternalapi/config"
+	"github.com/kurtosis-tech/new-obd/src/currencyexternalapi/config"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

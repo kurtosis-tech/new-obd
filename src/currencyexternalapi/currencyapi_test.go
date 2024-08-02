@@ -2,7 +2,7 @@ package currencyexternalapi
 
 import (
 	"context"
-	"github.com/kurtosis-tech/online-boutique-demo/src/currencyexternalapi/config/ghgist"
+	"github.com/kurtosis-tech/new-obd/src/currencyexternalapi/config/ghgist"
 	"github.com/stretchr/testify/require"
 	"testing"
 )
