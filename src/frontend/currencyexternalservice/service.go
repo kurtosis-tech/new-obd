@@ -43,7 +43,7 @@ func (s *CurrencyExternalService) Convert(ctx context.Context, fromCode string, 
 		err   error
 	)
 
-	code, units, nanos, err = s.secondaryApi.Convert(ctx, fromCode, fromUnits, fromNanos, to)
+	code, units, nanos, err = s.primaryApi.Convert(ctx, fromCode, fromUnits, fromNanos, to)
 	if err != nil {
 		code, units, nanos, err = s.secondaryApi.Convert(ctx, fromCode, fromUnits, fromNanos, to)
 		if err != nil {
