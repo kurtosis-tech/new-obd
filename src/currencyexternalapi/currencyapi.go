@@ -2,7 +2,6 @@ package currencyexternalapi
 
 import (
 	"context"
-	"encoding/json"
 	"github.com/kurtosis-tech/new-obd/src/currencyexternalapi/config"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
@@ -12,21 +11,6 @@ import (
 	"net/http"
 	"strings"
 )
-
-type CurrenciesResponse struct {
-	Data map[string]Currency `json:"data"`
-}
-
-type Currency struct {
-	Symbol        string `json:"symbol"`
-	Name          string `json:"name"`
-	SymbolNative  string `json:"symbol_native"`
-	DecimalDigits int    `json:"decimal_digits"`
-	Rounding      int    `json:"rounding"`
-	Code          string `json:"code"`
-	NamePlural    string `json:"name_plural"`
-	Type          string `json:"type"`
-}
 
 type LatestRatesResponse struct {
 	Data LatestRates `json:"data"`
@@ -62,15 +46,9 @@ func (c *CurrencyAPI) GetSupportedCurrencies(ctx context.Context) ([]string, err
 		return nil, err
 	}
 
-	currenciesResp := &CurrenciesResponse{}
-	if err = json.Unmarshal(httpResponseBodyBytes, currenciesResp); err != nil {
-		return nil, err
-	}
-
-	currencyCodes := []string{}
-
-	for code := range currenciesResp.Data {
-		currencyCodes = append(currencyCodes, code)
+	currencyCodes, err2 := c.config.GetCurrencyListFromResponse(httpResponseBodyBytes)
+	if err2 != nil {
+		return currencyCodes, err2
 	}
 
 	return currencyCodes, nil
@@ -119,12 +97,12 @@ func (c *CurrencyAPI) getLatestRatesFromAPI(ctx context.Context, from string, to
 		return nil, err
 	}
 
-	latestRatesResp := &LatestRatesResponse{}
-	if err = json.Unmarshal(httpResponseBodyBytes, latestRatesResp); err != nil {
-		return nil, err
+	data, err2 := c.config.GetLatestRatesFromResponse(httpResponseBodyBytes)
+	if err2 != nil {
+		return data, err2
 	}
 
-	return latestRatesResp.Data, nil
+	return data, nil
 }
 
 func (c *CurrencyAPI) doHttpRequest(
