@@ -151,6 +151,15 @@ func (fe *frontendServer) productHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	var isPresentFeature bool
+	experimentalFeaturesResponse, err := fe.cartService.GetExperimentalFeaturesWithResponse(r.Context())
+	if err != nil {
+		logrus.Debugf("It was not possible to get the experimental features from cart service. Error: %s", err.Error())
+	} else if experimentalFeaturesResponse.StatusCode() == 200 {
+		experimentalFeatures := experimentalFeaturesResponse.JSON200
+		isPresentFeature = *experimentalFeatures.ProductsPresent
+	}
+
 	product := struct {
 		Item  productcatalogservice_rest_types.Product
 		Price *productcatalogservice_rest_types.Money
@@ -165,10 +174,11 @@ func (fe *frontendServer) productHandler(w http.ResponseWriter, r *http.Request)
 		"currencies":    currencies,
 		"product":       product,
 		//"recommendations":   recommendations,
-		"cart_size":       cartSize(*cart.Items),
-		"platform_css":    plat.css,
-		"platform_name":   plat.provider,
-		"is_cymbal_brand": isCymbalBrand,
+		"cart_size":          cartSize(*cart.Items),
+		"platform_css":       plat.css,
+		"platform_name":      plat.provider,
+		"is_cymbal_brand":    isCymbalBrand,
+		"is_present_feature": isPresentFeature,
 		//"deploymentDetails": deploymentDetailsMap,
 	}); err != nil {
 		log.Println(err)
@@ -178,6 +188,7 @@ func (fe *frontendServer) productHandler(w http.ResponseWriter, r *http.Request)
 func (fe *frontendServer) addToCartHandler(w http.ResponseWriter, r *http.Request) {
 	quantity, _ := strconv.ParseUint(r.FormValue("quantity"), 10, 32)
 	productID := r.FormValue("product_id")
+	isAPresent := r.FormValue("present")
 	if productID == "" || quantity == 0 {
 		renderHTTPError(r, w, errors.New("invalid form input"), http.StatusBadRequest)
 		return
@@ -195,10 +206,16 @@ func (fe *frontendServer) addToCartHandler(w http.ResponseWriter, r *http.Reques
 	quantityInt32 := int32(quantity)
 	userId := userID
 
+	var isAPresentBool bool
+	if isAPresent == "on" {
+		isAPresentBool = true
+	}
+
 	body := cartservice_rest_types.AddItemRequest{
 		Item: &cartservice_rest_types.CartItem{
-			ProductId: p.Id,
-			Quantity:  &quantityInt32,
+			ProductId:  p.Id,
+			Quantity:   &quantityInt32,
+			IsAPresent: &isAPresentBool,
 		},
 		UserId: &userId,
 	}
@@ -243,9 +260,10 @@ func (fe *frontendServer) viewCartHandler(w http.ResponseWriter, r *http.Request
 	cart := cartResponse.JSON200
 
 	type cartItemView struct {
-		Item     productcatalogservice_rest_types.Product
-		Quantity int32
-		Price    *productcatalogservice_rest_types.Money
+		Item       productcatalogservice_rest_types.Product
+		Quantity   int32
+		IsAPresent bool
+		Price      *productcatalogservice_rest_types.Money
 	}
 	items := make([]cartItemView, len(*cart.Items))
 	currentCurrencyObj := currentCurrency(r)
@@ -258,6 +276,15 @@ func (fe *frontendServer) viewCartHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	cartItems := *cart.Items
+
+	var isPresentFeature bool
+	experimentalFeaturesResponse, err := fe.cartService.GetExperimentalFeaturesWithResponse(r.Context())
+	if err != nil {
+		logrus.Debugf("It was not possible to get the experimental features from cart service. Error: %s", err.Error())
+	} else if experimentalFeaturesResponse.StatusCode() == 200 {
+		experimentalFeatures := experimentalFeaturesResponse.JSON200
+		isPresentFeature = *experimentalFeatures.ProductsPresent
+	}
 
 	for i, item := range cartItems {
 		productResponse, err := fe.productCatalogService.GetProductsIdWithResponse(r.Context(), *item.ProductId, setKardinalReqEditorFcn)
@@ -284,6 +311,12 @@ func (fe *frontendServer) viewCartHandler(w http.ResponseWriter, r *http.Request
 			Quantity: quan,
 			Price:    multPrice,
 		}
+
+		if isPresentFeature {
+			isAPresent := *item.IsAPresent
+			items[i].IsAPresent = isAPresent
+		}
+
 		totalPrice = money.Must(money.Sum(totalPrice, multPrice))
 	}
 
