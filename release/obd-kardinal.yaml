@@ -128,7 +128,7 @@ spec:
             - name: ADDRESS
               value: ":8080"
             - name: FREECURRENCYAPIKEY
-              value: "fca_live_zwpwPHMCCqcbMOUjjlrX4wXVRVl1fu3KSlz647Bh"
+              value: "fca_live_nFVVF8CvfxqJhzMHB4N2x1NH7ffVVPwZr9hg3iNl"
             - name: CARTSERVICEHOST
               value: cartservice
             - name: PRODUCTCATALOGSERVICEHOST
