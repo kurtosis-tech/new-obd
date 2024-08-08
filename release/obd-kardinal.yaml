@@ -148,7 +148,7 @@ metadata:
         type: external
         servicename: free-currency-api
         args:
-          API_KEY: fca_live_VKZlykCWEiFcpBHnw74pzd4vLi04q1h9JySbVHDF
+          api_key: ""
 spec:
   type: ClusterIP
   selector:
