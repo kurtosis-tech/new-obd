@@ -2,13 +2,14 @@ package main
 
 import (
 	"fmt"
+	"net"
+	"os"
+
 	cartservice_server_rest_server "github.com/kurtosis-tech/new-obd/src/cartservice/api/http_rest/server"
 	"github.com/kurtosis-tech/new-obd/src/cartservice/cartstore"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/sirupsen/logrus"
-	"net"
-	"os"
 )
 
 const (
@@ -36,13 +37,14 @@ func main() {
 		AllowHeaders: defaultCORSHeaders,
 	}))
 
+	uri := os.Getenv("POSTGRES")
 	dbHost := os.Getenv("DB_HOST")
 	dbUsername := os.Getenv("DB_USERNAME")
 	dbPassword := os.Getenv("DB_PASSWORD")
 	dbName := os.Getenv("DB_NAME")
 	dbPort := os.Getenv("DB_PORT")
 
-	db, err := cartstore.NewDb(dbHost, dbUsername, dbPassword, dbName, dbPort)
+	db, err := cartstore.NewDb(uri, dbHost, dbUsername, dbPassword, dbName, dbPort)
 	if err != nil {
 		logrus.Fatal(err)
 	}

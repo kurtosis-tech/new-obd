@@ -26,7 +26,7 @@ spec:
                 - all
             privileged: false
             readOnlyRootFilesystem: true
-          image: leoporoli/newobd-cartservice:0.0.3
+          image: tedim52/cartservice:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8090
@@ -48,14 +48,18 @@ spec:
             timeoutSeconds: 5
             failureThreshold: 3
           env:
+            # if POSTGRES is set, uses this to connect
+            # otherwise uses environment variables below
+            - name: POSTGRES
+              value: "postgresql://cart_owner:EVnF8U0GlPTw@ep-hidden-union-a5egskrj.us-east-2.aws.neon.tech/cart?sslmode=require"
             - name: PORT
               value: "8090"
             - name: DB_USERNAME
-              value: "postgresuser"
+              value: "tedidb_owner"
             - name: DB_PASSWORD
-              value: "postgrespass"
+              value: "6TJ3sBMkQzcg"
             - name: DB_HOST
-              value: "postgres"
+              value: "ep-jolly-sun-a5ve8gh1.us-east-2.aws.neon.tech"
             - name: DB_PORT
               value: "5432"
             - name: DB_NAME
@@ -69,7 +73,14 @@ metadata:
     app: cartservice
     version: v1
   annotations:
-    kardinal.dev.service/dependencies: "postgres:tcp"
+    kardinal.dev.service/plugins: | 
+      - name: github.com/kurtosis-tech/neondb-plugin
+        type: external
+        servicename: neon-postgres-db
+        args:
+          NEON_API_KEY: "9z6p12le5ves63eje5177vd1c6asmd8gmg350yycsfi2aqjnyeqrbp4tx6fewbjk"
+          NEON_PROJECT_ID: "twilight-block-07621069"
+          NEON_FORK_FROM_BRANCH_ID: "br-white-smoke-a5azi9yl"
 spec:
   type: ClusterIP
   selector:
@@ -104,7 +115,7 @@ spec:
     spec:
       containers:
         - name: server
-          image: leoporoli/newobd-frontend:0.0.4
+          image: leoporoli/newobd-frontend:0.0.5
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
@@ -128,7 +139,7 @@ spec:
             - name: ADDRESS
               value: ":8080"
             - name: FREECURRENCYAPIKEY
-              value: "fca_live_VKZlykCWEiFcpBHnw74pzd4vLi04q1h9JySbVHDF"
+              value: ""
             - name: CARTSERVICEHOST
               value: cartservice
             - name: PRODUCTCATALOGSERVICEHOST
@@ -148,7 +159,7 @@ metadata:
         type: external
         servicename: free-currency-api
         args:
-          API_KEY: fca_live_VKZlykCWEiFcpBHnw74pzd4vLi04q1h9JySbVHDF
+          api_key: ""
 spec:
   type: ClusterIP
   selector:
@@ -177,74 +188,6 @@ spec:
       targetPort: 8080
       protocol: TCP
       appProtocol: HTTP
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: postgres-v1
-  labels:
-    app: postgres
-    version: v1
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: postgres
-      version: v1
-  template:
-    metadata:
-      labels:
-        app: postgres
-        version: v1
-    spec:
-      containers:
-        - name: postgres
-          image: 'postgres:14'
-          imagePullPolicy: IfNotPresent
-          ports:
-            - containerPort: 5432
-          env:
-            - name: POSTGRES_DB
-              value: "cart"
-            - name: POSTGRES_USER
-              value: "postgresuser"
-            - name: POSTGRES_PASSWORD
-              value: "postgrespass"
-          volumeMounts:
-            - mountPath: /var/lib/postgresql/data
-              name: postgres-data
-      volumes:
-        - name: postgres-data
-          emptyDir: {}
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: postgres
-  labels:
-    app: postgres
-    version: v1
-  annotations:
-    kardinal.dev.service/stateful: "true"
-    kardinal.dev/plugins: |
-      - name: github.com/kurtosis-tech/postgres-seed-plugin
-        args:
-          seed_script: ""
-          db_name: "cart"
-          db_user: "postgresuser"
-          db_password: "postgrespass"
-
-spec:
-  type: ClusterIP
-  ports:
-    - name: tcp
-      port: 5432
-      targetPort: 5432
-      protocol: TCP
-  selector:
-    app: postgres
-
 ---
 apiVersion: apps/v1
 kind: Deployment
