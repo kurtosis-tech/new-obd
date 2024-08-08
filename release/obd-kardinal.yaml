@@ -143,6 +143,12 @@ metadata:
     version: v1
   annotations:
     kardinal.dev.service/dependencies: "productcatalogservice:http,cartservice:http"
+    kardinal.dev.service/plugins: |
+      - name: github.com/kurtosis-tech/free-currency-api-plugin
+        type: external
+        servicename: free-currency-api
+        args:
+          api_key: ""
 spec:
   type: ClusterIP
   selector:
