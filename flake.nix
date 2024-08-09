@@ -22,6 +22,7 @@
           gopls
           go-tools
           golangci-lint
+          skaffold
         ];
 
         shellHook = ''
