@@ -225,13 +225,6 @@ metadata:
   labels:
     app: postgres
     version: v1
-apiVersion: v1
-kind: Service
-metadata:
-  name: postgres
-  labels:
-    app: postgres
-    version: v1
   annotations:
     kardinal.dev.service/stateful: "true"
     kardinal.dev.service/plugins: |
