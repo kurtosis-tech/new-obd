@@ -232,7 +232,7 @@ metadata:
         args:
           seed_script: |
             --  create the table
-            CREATE TABLE public.items(
+            CREATE TABLE IF NOT EXISTS public.items(
                 id bigserial PRIMARY KEY,
                 created_at TIMESTAMP WITH TIME ZONE,
                 updated_at TIMESTAMP WITH TIME ZONE,
