@@ -1,0 +1,39 @@
+schema = 3
+
+[mod]
+  [mod."github.com/apapsch/go-jsonmerge/v2"]
+    version = "v2.0.0"
+    hash = "sha256-xp/1B6XUN2EbddBfoUkTV3oTk+34m4kOZP+66HhfLg4="
+  [mod."github.com/golang/protobuf"]
+    version = "v1.5.0"
+    hash = "sha256-UbjypOyvcr3GwutjMR6Y3kUYcc4F7SjhCrak2PSxRPE="
+  [mod."github.com/google/go-cmp"]
+    version = "v0.5.8"
+    hash = "sha256-8zkIo+Sr1NXMnj3PNmvjX2sZKnAKWXOFvmnX7D9bwxQ="
+  [mod."github.com/google/uuid"]
+    version = "v1.5.0"
+    hash = "sha256-DasOte4xANR1VND5XEHKGhpGiyYq74TJmNrgWeIRX4U="
+  [mod."github.com/gorilla/mux"]
+    version = "v1.8.1"
+    hash = "sha256-nDABvAhlYgxUW2N/brrep7NkQXoSGcHhA+XI4+tK0F0="
+  [mod."github.com/oapi-codegen/runtime"]
+    version = "v1.1.1"
+    hash = "sha256-GRvzpQngQPAy59KvvcwhjYqjx4gttIhOtQKjqfQcNvI="
+  [mod."github.com/pkg/errors"]
+    version = "v0.9.1"
+    hash = "sha256-mNfQtcrQmu3sNg/7IwiieKWOgFQOVVe2yXgKBpe/wZw="
+  [mod."github.com/sirupsen/logrus"]
+    version = "v1.8.1"
+    hash = "sha256-vUIDlLXYBD74+JqdoSx+W3J6r5cOk63heo0ElsHizoM="
+  [mod."golang.org/x/sys"]
+    version = "v0.20.0"
+    hash = "sha256-mowlaoG2k4n1c1rApWef5EMiXd3I77CsUi8jPh6pTYA="
+  [mod."google.golang.org/genproto"]
+    version = "v0.0.0-20200526211855-cb27e3aa2013"
+    hash = "sha256-wFVFmWkQLFRBBNTt3C0Dy3GChkYEYnaDLVbQhyq2K1g="
+  [mod."google.golang.org/grpc"]
+    version = "v1.42.0"
+    hash = "sha256-p97BCecu+L1Lk2/Yj0JEVJP8YVxikOxGw+IbNCsA/go="
+  [mod."google.golang.org/protobuf"]
+    version = "v1.31.0"
+    hash = "sha256-UdIk+xRaMfdhVICvKRk1THe3R1VU+lWD8hqoW/y8jT0="
