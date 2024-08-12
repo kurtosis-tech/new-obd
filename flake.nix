@@ -27,7 +27,17 @@
           ];
         };
 
-        version = toString (self.shortRev or self.dirtyShortRev or self.lastModified or "unknown");
+        version = toString (self.ref or self.shortRev or self.dirtyShortRev or self.lastModified or "unknown");
+        tag-name = let
+          branch-name = import ./branch-name.nix;
+          tag = toString (
+            if isNull branch-name
+            then "${version}"
+            else branch-name
+          );
+        in
+          builtins.replaceStrings ["/"] ["_"] tag;
+
         service_names = [
           "cartservice"
           "currencyexternalapi"
@@ -53,7 +63,7 @@
           pkgs.lib.recursiveUpdate acc {
             packages."publish-${service}-container" = let
               name = "${imageRegistry}/${service}";
-              tagBase = version;
+              tagBase = tag-name;
               images =
                 map (
                   arch: rec {
@@ -171,7 +181,7 @@
                   in
                     builtins.trace "${service}/bin" pkgs.dockerTools.buildImage {
                       name = "${imageRegistry}/${service_name}";
-                      tag = "${version}-${arch}";
+                      tag = "${tag-name}-${arch}";
                       # tag = commit_hash;
                       created = "now";
                       copyToRoot = pkgs.buildEnv {
