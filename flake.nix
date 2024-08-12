@@ -136,7 +136,7 @@
             inherit pkgs;
           };
 
-          packages.productcalogservice = pkgs.callPackage ./src/productcatalogservice {
+          packages.productcatalogservice = pkgs.callPackage ./src/productcatalogservice {
             inherit pkgs;
           };
 
@@ -199,8 +199,8 @@
                       architecture = arch;
                       config.Cmd =
                         if !needsCrossCompilation
-                        then ["${service}/bin/${service.pname}"]
-                        else ["${service}/bin/${os}_${arch}/${service.pname}"];
+                        then ["${service}/bin/${service.name}"]
+                        else ["${service}/bin/${os}_${arch}/${service.name}"];
                       config.Env = ["SSL_CERT_FILE=${container_pkgs.cacert}/etc/ssl/certs/ca-bundle.crt"];
                     };
                 };
