@@ -55,6 +55,7 @@ jobs:
         run: |
           git reset --hard
           git clean -f
+          nix develop --command gofmt -l .
           nix develop --command test -z $(gofmt -l .)
 
   build_images:
