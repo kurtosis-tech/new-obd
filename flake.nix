@@ -33,7 +33,7 @@
           tag = toString (
             if isNull branch-name
             then "${version}"
-            else branch-name
+            else "${toString branch-name}"
           );
         in
           builtins.replaceStrings ["/"] ["_"] tag;
@@ -108,21 +108,57 @@
           };
 
         systemOutput = rec {
-          devShells.default = pkgs.mkShell {
-            buildInputs = with pkgs; [
-              go
-              gopls
-              go-tools
-              golangci-lint
-              pkgs.gomod2nix
-              skaffold
-            ];
+          devShells.default = let
+            go-tidy-all = pkgs.writeShellApplication {
+              name = "go-tidy-all";
+              runtimeInputs = with pkgs; [go git gomod2nix];
+              text = ''
+                root_dirpath=$(git rev-parse --show-toplevel)
+                find "$root_dirpath" -type f -name 'go.mod' -exec sh -c 'dir=$(dirname "$1") && cd "$dir" && echo "$dir" && go mod tidy && gomod2nix' shell {} \;
+              '';
+            };
 
-            shellHook = ''
-              echo "Go development environment loaded"
-              go version
-            '';
-          };
+            tag-branch = pkgs.writeShellApplication {
+              name = "tag-branch";
+              runtimeInputs = with pkgs; [git];
+              text = ''
+                GIT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null)
+                CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+                echo "\"$CURRENT_BRANCH\"" >"$GIT_ROOT/branch-name.nix"
+                echo "Branch name \"$CURRENT_BRANCH\" written to $GIT_ROOT/branch-name.nix"
+              '';
+            };
+
+            tag-branch-version = pkgs.writeShellApplication {
+              name = "tag-branch-version";
+              runtimeInputs = with pkgs; [git];
+              text = ''
+                GIT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null)
+                CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+                SHORT_COMMIT_HASH=$(git rev-parse --short HEAD)
+                echo "\"$CURRENT_BRANCH-$SHORT_COMMIT_HASH\"" >"$GIT_ROOT/branch-name.nix"
+                echo "Branch name \"$CURRENT_BRANCH-$SHORT_COMMIT_HASH\" written to $GIT_ROOT/branch-name.nix"
+              '';
+            };
+          in
+            pkgs.mkShell {
+              buildInputs = with pkgs; [
+                go
+                gopls
+                go-tools
+                golangci-lint
+                pkgs.gomod2nix
+                skaffold
+                go-tidy-all
+                tag-branch
+                tag-branch-version
+              ];
+
+              shellHook = ''
+                echo "Go development environment loaded"
+                go version
+              '';
+            };
 
           packages.cartservice = pkgs.callPackage ./src/cartservice {
             inherit pkgs;
