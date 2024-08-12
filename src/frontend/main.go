@@ -2,12 +2,13 @@ package main
 
 import (
 	"fmt"
-	cartservice_rest_client "github.com/kurtosis-tech/new-obd/src/cartservice/api/http_rest/client"
-	"github.com/kurtosis-tech/new-obd/src/frontend/currencyexternalservice"
-	productcatalogservice_rest_client "github.com/kurtosis-tech/new-obd/src/productcatalogservice/api/http_rest/client"
 	"net/http"
 	"os"
 	"time"
+
+	cartservice_rest_client "github.com/kurtosis-tech/new-obd/src/cartservice/api/http_rest/client"
+	"github.com/kurtosis-tech/new-obd/src/frontend/currencyexternalservice"
+	productcatalogservice_rest_client "github.com/kurtosis-tech/new-obd/src/productcatalogservice/api/http_rest/client"
 
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
@@ -24,16 +25,14 @@ const (
 	cookieCurrency  = cookiePrefix + "currency"
 )
 
-var (
-	whitelistedCurrencies = map[string]bool{
-		"USD": true,
-		"EUR": true,
-		"CAD": true,
-		"JPY": true,
-		"GBP": true,
-		"TRY": true,
-	}
-)
+var whitelistedCurrencies = map[string]bool{
+	"USD": true,
+	"EUR": true,
+	"CAD": true,
+	"JPY": true,
+	"GBP": true,
+	"TRY": true,
+}
 
 type ctxKeySessionID struct{}
 
@@ -44,7 +43,6 @@ type frontendServer struct {
 }
 
 func main() {
-
 	log := logrus.New()
 	log.Level = logrus.DebugLevel
 	log.Formatter = &logrus.JSONFormatter{
@@ -102,12 +100,11 @@ func main() {
 	handler = &logHandler{log: log, next: handler} // add logging
 	handler = ensureSessionID(handler)             // add session ID
 	// handler = tracing(handler)                     // add opentelemetry instrumentation
-	//r.Use(otelmux.Middleware(name))
+	// r.Use(otelmux.Middleware(name))
 	r.Use(KardinalTracingContextWrapper)
 
 	// Start the server
 	http.Handle("/", r)
 	fmt.Println("Server starting on port 8080...")
 	http.ListenAndServe(":8080", handler)
-
 }

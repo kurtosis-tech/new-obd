@@ -1,0 +1,116 @@
+# Our desired pipeline using only a Nix shell environment
+name: Check and build Kardinal
+
+on:
+  push:
+    branches:
+      - main
+      - "demo-*"
+    tags:
+      - "v*.*.*"
+  pull_request:
+    branches:
+      - main
+      - "demo-*"
+env:
+  MAIN_BRANCH: ${{ 'refs/heads/main' }}
+
+jobs:
+  check_nix:
+    name: Basic Check
+    runs-on: ubuntu-22.04
+    steps:
+      - name: git checkout
+        uses: actions/checkout@v3
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@main
+
+      - name: Magic cache
+        uses: DeterminateSystems/magic-nix-cache-action@main
+
+      - name: Check Nixpkgs inputs
+        uses: DeterminateSystems/flake-checker-action@main
+        with:
+          fail-mode: true
+
+      # Nix-specific logic begins here
+      - name: Nix Check
+        run: |
+          nix flake check
+
+      - name: Check Go tidiness
+        run: |
+          git reset --hard
+          git clean -f
+          nix develop --command go-tidy-all
+          export changed_files=$(git diff-files --name-only | grep -cv ".toml$")
+          if [[ $changed_files != 0 ]]; then
+            echo "Go modules are not so tidy (run 'go-tidy-all' to fix it):"
+            git diff-files --name-only
+            exit 1
+          fi
+
+      - name: Check Go formatting
+        run: |
+          git reset --hard
+          git clean -f
+          nix develop --command gofmt -l .
+          nix develop --command test -z $(gofmt -l .)
+
+  build_images:
+    name: Test, build and publish images
+    needs: check_nix
+    runs-on: ubuntu-22.04
+    steps:
+      - name: git checkout
+        uses: actions/checkout@v3
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@main
+
+      - name: Magic cache
+        uses: DeterminateSystems/magic-nix-cache-action@main
+
+      - name: Build cartservice images
+        run: |
+          nix build ./#containers.x86_64-linux.cartservice.arm64 --no-link --print-out-paths
+          nix build ./#containers.x86_64-linux.cartservice.amd64 --no-link --print-out-paths
+
+      - name: Build currencyexternalapi images
+        run: |
+          nix build ./#containers.x86_64-linux.currencyexternalapi.arm64 --no-link --print-out-paths
+          nix build ./#containers.x86_64-linux.currencyexternalapi.amd64 --no-link --print-out-paths
+
+      - name: Build frontend images
+        run: |
+          nix build ./#containers.x86_64-linux.frontend.arm64 --no-link --print-out-paths
+          nix build ./#containers.x86_64-linux.frontend.amd64 --no-link --print-out-paths
+
+      - name: Build productcatalogservice images
+        run: |
+          nix build ./#containers.x86_64-linux.productcatalogservice.arm64 --no-link --print-out-paths
+          nix build ./#containers.x86_64-linux.productcatalogservice.amd64 --no-link --print-out-paths
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Publish images
+        if: github.ref == env.MAIN_BRANCH
+        run: |
+          # Set tag to be the branch name and version
+          nix develop --command tag-branch-version
+          nix run ./#publish-cartservice-container
+          nix run ./#publish-currencyexternalapi-container
+          nix run ./#publish-frontend-container
+          nix run ./#publish-productcatalogservice-container
+
+          # Set tag to be the branch name 
+          nix develop --command tag-branch
+          nix run ./#publish-cartservice-container
+          nix run ./#publish-currencyexternalapi-container
+          nix run ./#publish-frontend-container
+          nix run ./#publish-productcatalogservice-container

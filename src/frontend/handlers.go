@@ -17,6 +17,14 @@ package main
 import (
 	"context"
 	"fmt"
+	"html/template"
+	"log"
+	"net/http"
+	"os"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/gorilla/mux"
 	cartservice_rest_types "github.com/kurtosis-tech/new-obd/src/cartservice/api/http_rest/types"
 	"github.com/kurtosis-tech/new-obd/src/frontend/consts"
@@ -24,14 +32,6 @@ import (
 	productcatalogservice_rest_types "github.com/kurtosis-tech/new-obd/src/productcatalogservice/api/http_rest/types"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"html/template"
-	"log"
-	"net/http"
-	"os"
-	"strconv"
-	"time"
-
-	"strings"
 )
 
 type platformDetails struct {
@@ -54,7 +54,6 @@ const (
 )
 
 func (fe *frontendServer) homeHandler(w http.ResponseWriter, r *http.Request) {
-
 	currencies, err := fe.currencyService.GetSupportedCurrencies(r.Context())
 	if err != nil {
 		renderHTTPError(r, w, errors.Wrapf(err, "error retrieving currencies"), http.StatusInternalServerError)
@@ -151,15 +150,6 @@ func (fe *frontendServer) productHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	var isPresentFeature bool
-	experimentalFeaturesResponse, err := fe.cartService.GetExperimentalFeaturesWithResponse(r.Context())
-	if err != nil {
-		logrus.Debugf("It was not possible to get the experimental features from cart service. Error: %s", err.Error())
-	} else if experimentalFeaturesResponse.StatusCode() == 200 {
-		experimentalFeatures := experimentalFeaturesResponse.JSON200
-		isPresentFeature = *experimentalFeatures.ProductsPresent
-	}
-
 	product := struct {
 		Item  productcatalogservice_rest_types.Product
 		Price *productcatalogservice_rest_types.Money
@@ -178,7 +168,7 @@ func (fe *frontendServer) productHandler(w http.ResponseWriter, r *http.Request)
 		"platform_css":       plat.css,
 		"platform_name":      plat.provider,
 		"is_cymbal_brand":    isCymbalBrand,
-		"is_present_feature": isPresentFeature,
+		"is_present_feature": false,
 		//"deploymentDetails": deploymentDetailsMap,
 	}); err != nil {
 		log.Println(err)
@@ -188,7 +178,6 @@ func (fe *frontendServer) productHandler(w http.ResponseWriter, r *http.Request)
 func (fe *frontendServer) addToCartHandler(w http.ResponseWriter, r *http.Request) {
 	quantity, _ := strconv.ParseUint(r.FormValue("quantity"), 10, 32)
 	productID := r.FormValue("product_id")
-	isAPresent := r.FormValue("present")
 	if productID == "" || quantity == 0 {
 		renderHTTPError(r, w, errors.New("invalid form input"), http.StatusBadRequest)
 		return
@@ -206,16 +195,10 @@ func (fe *frontendServer) addToCartHandler(w http.ResponseWriter, r *http.Reques
 	quantityInt32 := int32(quantity)
 	userId := userID
 
-	var isAPresentBool bool
-	if isAPresent == "on" {
-		isAPresentBool = true
-	}
-
 	body := cartservice_rest_types.AddItemRequest{
 		Item: &cartservice_rest_types.CartItem{
-			ProductId:  p.Id,
-			Quantity:   &quantityInt32,
-			IsAPresent: &isAPresentBool,
+			ProductId: p.Id,
+			Quantity:  &quantityInt32,
 		},
 		UserId: &userId,
 	}
@@ -277,15 +260,6 @@ func (fe *frontendServer) viewCartHandler(w http.ResponseWriter, r *http.Request
 
 	cartItems := *cart.Items
 
-	var isPresentFeature bool
-	experimentalFeaturesResponse, err := fe.cartService.GetExperimentalFeaturesWithResponse(r.Context())
-	if err != nil {
-		logrus.Debugf("It was not possible to get the experimental features from cart service. Error: %s", err.Error())
-	} else if experimentalFeaturesResponse.StatusCode() == 200 {
-		experimentalFeatures := experimentalFeaturesResponse.JSON200
-		isPresentFeature = *experimentalFeatures.ProductsPresent
-	}
-
 	for i, item := range cartItems {
 		productResponse, err := fe.productCatalogService.GetProductsIdWithResponse(r.Context(), *item.ProductId, setKardinalReqEditorFcn)
 		if err != nil {
@@ -310,11 +284,6 @@ func (fe *frontendServer) viewCartHandler(w http.ResponseWriter, r *http.Request
 			Item:     prod,
 			Quantity: quan,
 			Price:    multPrice,
-		}
-
-		if isPresentFeature {
-			isAPresent := *item.IsAPresent
-			items[i].IsAPresent = isAPresent
 		}
 
 		totalPrice = money.Must(money.Sum(totalPrice, multPrice))
@@ -418,7 +387,7 @@ func renderCurrencyLogo(currencyCode string) string {
 		"GBP": "£",
 	}
 
-	logo := "$" //default
+	logo := "$" // default
 	if val, ok := logos[currencyCode]; ok {
 		logo = val
 	}
@@ -452,10 +421,9 @@ func cartSize(c []cartservice_rest_types.CartItem) int {
 }
 
 func getSetTraceIdHeaderRequestEditorFcn(upsTreamRequest *http.Request) func(ctx context.Context, req *http.Request) error {
-
 	traceID := upsTreamRequest.Header.Get(consts.KardinalTraceIdHeaderKey)
 
-	var setKardinalReqEditorFcn = func(ctx context.Context, req *http.Request) error {
+	setKardinalReqEditorFcn := func(ctx context.Context, req *http.Request) error {
 		req.Header.Set(consts.KardinalTraceIdHeaderKey, traceID)
 		return nil
 	}
