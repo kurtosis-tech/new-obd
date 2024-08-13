@@ -215,7 +215,7 @@
                             doCheck = false;
                           });
                   in
-                    builtins.trace "${service}/bin" pkgs.dockerTools.buildImage {
+                    pkgs.dockerTools.buildImage {
                       name = "${imageRegistry}/${service_name}";
                       tag = "${tag-name}-${arch}";
                       # tag = commit_hash;
@@ -235,8 +235,8 @@
                       architecture = arch;
                       config.Cmd =
                         if !needsCrossCompilation
-                        then ["${service}/bin/${service.name}"]
-                        else ["${service}/bin/${os}_${arch}/${service.name}"];
+                        then ["${service}/bin/${service.pname}"]
+                        else ["${service}/bin/${os}_${arch}/${service.pname}"];
                       config.Env = ["SSL_CERT_FILE=${container_pkgs.cacert}/etc/ssl/certs/ca-bundle.crt"];
                     };
                 };
