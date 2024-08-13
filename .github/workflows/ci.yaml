@@ -34,7 +34,6 @@ jobs:
         with:
           fail-mode: true
 
-      # Nix-specific logic begins here
       - name: Nix Check
         run: |
           nix flake check
