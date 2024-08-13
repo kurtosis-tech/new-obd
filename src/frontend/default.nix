@@ -39,7 +39,8 @@ in
 
       # wrapper script to start the binary in the same folder as the static files
       mv $PNAME_PATH $PNAME_FOLDER/bin-${pname}
-      echo "cd $PNAME_FOLDER && $PNAME_FOLDER/bin-${pname}" > $PNAME_PATH
+      echo "#!/bin/bash" > $PNAME_PATH
+      echo "cd $PNAME_FOLDER && $PNAME_FOLDER/bin-${pname}" >> $PNAME_PATH
       chmod +x $PNAME_PATH
     '';
   }

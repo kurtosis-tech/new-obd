@@ -149,6 +149,8 @@
                 golangci-lint
                 pkgs.gomod2nix
                 skaffold
+                minikube
+                dive
                 go-tidy-all
                 tag-branch
                 tag-branch-version
