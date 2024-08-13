@@ -99,7 +99,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Publish images
-        if: github.ref == env.MAIN_BRANCH
+        if: github.ref == env.MAIN_BRANCH && startsWith(github.ref, 'refs/heads/demo-')
         run: |
           # Set tag to be the branch name and version
           nix develop --command tag-branch-version
