@@ -71,7 +71,7 @@ func main() {
 		logrus.Fatal("An error occurred creating cart service client!\nError was: %s", err)
 	}
 
-	apiKey := os.Getenv("FREECURRENCYAPIKEY")
+	apiKey := os.Getenv("JSDELIVRAPIKEY")
 
 	svc := &frontendServer{
 		cartService:           cartServiceClient,

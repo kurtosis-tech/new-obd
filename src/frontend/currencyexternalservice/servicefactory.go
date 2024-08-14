@@ -7,7 +7,7 @@ import (
 )
 
 func CreateService(apiKey string) *CurrencyExternalService {
-	primaryApi := currencyexternalapi.NewCurrencyAPI(jsdelivr.JsdelivrAPIConfig)
+	primaryApi := currencyexternalapi.NewCurrencyAPI(jsdelivr.GetJsdelivrAPIConfig(apiKey))
 	secondaryApi := currencyexternalapi.NewCurrencyAPI(freecurrency.GetFreeCurrencyAPIConfig(apiKey))
 
 	service := NewService(primaryApi, secondaryApi)
