@@ -26,7 +26,7 @@ spec:
                 - all
             privileged: false
             readOnlyRootFilesystem: true
-          image: leoporoli/newobd-cartservice:0.0.3
+          image: kurtosistech/cartservice:main
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8090
@@ -104,7 +104,7 @@ spec:
     spec:
       containers:
         - name: server
-          image: leoporoli/newobd-frontend:0.0.6
+          image: kurtosistech/frontend:main
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
@@ -128,7 +128,7 @@ spec:
             - name: ADDRESS
               value: ":8080"
             - name: FREECURRENCYAPIKEY
-              value: "fca_live_zwpwPHMCCqcbMOUjjlrX4wXVRVl1fu3KSlz647Bh"
+              value: "fca_live_nFVVF8CvfxqJhzMHB4N2x1NH7ffVVPwZr9hg3iNl"
             - name: CARTSERVICEHOST
               value: cartservice
             - name: PRODUCTCATALOGSERVICEHOST
@@ -143,6 +143,12 @@ metadata:
     version: v1
   annotations:
     kardinal.dev.service/dependencies: "productcatalogservice:http,cartservice:http"
+    kardinal.dev.service/plugins: |
+      - name: github.com/kurtosis-tech/free-currency-api-plugin
+        type: external
+        servicename: free-currency-api
+        args:
+          api_key: ""
 spec:
   type: ClusterIP
   selector:
@@ -193,7 +199,7 @@ spec:
     spec:
       containers:
         - name: postgres
-          image: 'postgres:14'
+          image: "postgres:14"
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 5432
@@ -224,7 +230,26 @@ metadata:
     kardinal.dev.service/plugins: |
       - name: github.com/kurtosis-tech/postgres-seed-plugin
         args:
-          seed_script: "create table if not exists public.items( id bigserial primary key, created_at timestamp with time zone, updated_at timestamp with time zone, deleted_at timestamp with time zone, user_id    text, product_id text, quantity   integer); INSERT INTO public.items (id, created_at, updated_at, deleted_at, user_id, product_id, quantity) VALUES (1, '2024-08-02 13:02:07.656104 +00:00', '2024-08-02 13:02:07.656104 +00:00', null, '0494c5e0-dde0-48fa-a6d8-f7962f5476bf', '66VCHSJNUP', 1); INSERT INTO public.items (id, created_at, updated_at, deleted_at, user_id, product_id, quantity) VALUES (2, '2024-08-02 13:02:10.891407 +00:00', '2024-08-02 13:02:10.891407 +00:00', null, '0494c5e0-dde0-48fa-a6d8-f7962f5476bf', '2ZYFJ3GM2N', 1);"
+          seed_script: |
+            --  create the table
+            CREATE TABLE IF NOT EXISTS public.items(
+                id bigserial PRIMARY KEY,
+                created_at TIMESTAMP WITH TIME ZONE,
+                updated_at TIMESTAMP WITH TIME ZONE,
+                deleted_at TIMESTAMP WITH TIME ZONE,
+                user_id TEXT,
+                product_id TEXT,
+                quantity INTEGER
+            );
+
+            INSERT INTO public.items (id, created_at, updated_at, deleted_at, user_id, product_id, quantity) 
+            VALUES (1, '2024-08-02 13:02:07.656104 +00:00', '2024-08-02 13:02:07.656104 +00:00', null, '0494c5e0-dde0-48fa-a6d8-f7962f5476bf', '66VCHSJNUP', 1);
+
+            INSERT INTO public.items (id, created_at, updated_at, deleted_at, user_id, product_id, quantity) 
+            VALUES (2, '2024-08-02 13:02:10.891407 +00:00', '2024-08-02 13:02:10.891407 +00:00', null, '0494c5e0-dde0-48fa-a6d8-f7962f5476bf', '2ZYFJ3GM2N', 1);
+
+            -- Set the sequence to the correct value after inserting records
+            SELECT setval('public.items_id_seq', (SELECT MAX(id) FROM public.items));
           db_name: "cart"
           db_user: "postgresuser"
           db_password: "postgrespass"
@@ -261,7 +286,7 @@ spec:
       terminationGracePeriodSeconds: 5
       containers:
         - name: server
-          image: leoporoli/newobd-productcatalogservice:0.0.3
+          image: kurtosistech/productcatalogservice:main
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8070

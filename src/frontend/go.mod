@@ -4,12 +4,19 @@ go 1.21.9
 
 toolchain go1.22.4
 
+replace (
+	github.com/kurtosis-tech/new-obd/src/cartservice => ../cartservice
+	github.com/kurtosis-tech/new-obd/src/currencyexternalapi => ../currencyexternalapi
+	github.com/kurtosis-tech/new-obd/src/productcatalogservice => ../productcatalogservice
+
+)
+
 require (
 	github.com/google/uuid v1.5.0
 	github.com/gorilla/mux v1.8.1
-	github.com/kurtosis-tech/new-obd/src/cartservice v0.0.0-20240801144151-c12fae1940c6
-	github.com/kurtosis-tech/new-obd/src/currencyexternalapi v0.0.0-20240802205348-5e147817724f
-	github.com/kurtosis-tech/new-obd/src/productcatalogservice v0.0.0-20240731052808-7a2597c080ba
+	github.com/kurtosis-tech/new-obd/src/cartservice v0.0.0
+	github.com/kurtosis-tech/new-obd/src/currencyexternalapi v0.0.0
+	github.com/kurtosis-tech/new-obd/src/productcatalogservice v0.0.0
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.8.1
 )
