@@ -10,7 +10,6 @@ servers:
     description: Product catalog service API
 
 paths:
-
   /health:
     get:
       summary: Health check endpoint
@@ -18,12 +17,12 @@ paths:
       responses:
         default:
           $ref: "#/components/responses/NotOk"
-        '200':
+        "200":
           description: Service is healthy
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HealthResponse'
+                $ref: "#/components/schemas/HealthResponse"
 
   /products:
     get:
@@ -140,6 +139,8 @@ components:
           type: string
         price_usd:
           $ref: "#/components/schemas/Money"
+        discount:
+          type: number
         categories:
           type: array
           items:

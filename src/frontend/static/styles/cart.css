@@ -56,6 +56,8 @@
 
 .cart-summary-item-row,
 .cart-summary-shipping-row,
+.cart-summary-total-value-row,
+.cart-summary-total-discount-row,
 .cart-summary-total-row {
     padding-bottom: 24px;
     padding-top: 24px;
@@ -90,6 +92,11 @@
     }
 }
 
+.cart-item-original-price {
+    font-size: 14px;
+    text-decoration: line-through;
+}
+
 /* Item cost (price). */
 .cart-summary-item-row .row:last-child strong {
     font-weight: 500;
@@ -98,6 +105,17 @@
 .cart-summary-total-row {
     font-size: 28px;
 }
+
+.cart-summary-total-value-row {
+    font-size: 28px;
+    text-decoration: line-through;
+}
+
+.cart-summary-total-discount-row {
+    font-size: 28px;
+    color: red;
+}
+
 
 /* Cart Checkout Form */
 

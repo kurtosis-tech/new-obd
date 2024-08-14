@@ -32,7 +32,8 @@
         <div class="product-wrapper">
 
           <h2>{{ $.product.Item.Name }}</h2>
-          <p class="product-price">{{ renderMoney $.product.Price }}</p>
+          <p class="product-original-price">{{ renderMoney $.product.Price }}</p>
+          <p class="product-price">{{ renderMoney $.product.FinalPrice }}</p>
           <p>{{ $.product.Item.Description }}</p>
 
           <form method="POST" action="/cart">

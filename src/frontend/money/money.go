@@ -16,6 +16,7 @@ package money
 
 import (
 	"errors"
+
 	productcatalogservice_rest_types "github.com/kurtosis-tech/new-obd/src/productcatalogservice/api/http_rest/types"
 )
 
@@ -32,7 +33,6 @@ var (
 
 // IsValid checks if specified value has a valid units/nanos signs and ranges.
 func IsValid(m *productcatalogservice_rest_types.Money) bool {
-
 	nanos := *m.Nanos
 	return signMatches(m) && validNanos(nanos)
 }
@@ -84,7 +84,8 @@ func Negate(m *productcatalogservice_rest_types.Money) *productcatalogservice_re
 	return &productcatalogservice_rest_types.Money{
 		Units:        &negativeUnits,
 		Nanos:        &negativeNanos,
-		CurrencyCode: m.CurrencyCode}
+		CurrencyCode: m.CurrencyCode,
+	}
 }
 
 // Must panics if the given error is not nil. This can be used with other
@@ -126,7 +127,8 @@ func Sum(l, r *productcatalogservice_rest_types.Money) (*productcatalogservice_r
 	return &productcatalogservice_rest_types.Money{
 		Units:        &units,
 		Nanos:        &nanos,
-		CurrencyCode: l.CurrencyCode}, nil
+		CurrencyCode: l.CurrencyCode,
+	}, nil
 }
 
 // MultiplySlow is a slow multiplication operation done through adding the value
@@ -138,4 +140,33 @@ func MultiplySlow(m *productcatalogservice_rest_types.Money, n uint32) *productc
 		n--
 	}
 	return out
+}
+
+// MultiplyFloat multiplies the Money value by a floating-point factor.
+// It returns an error if the value is invalid or the result is invalid.
+func MultiplyFloat(m *productcatalogservice_rest_types.Money, factor float64) (*productcatalogservice_rest_types.Money, error) {
+	if !IsValid(m) {
+		return &productcatalogservice_rest_types.Money{}, ErrInvalidValue
+	}
+
+	// Convert Money to total nanoseconds
+	totalNanos := int64(*m.Units)*nanosMod + int64(*m.Nanos)
+
+	// Perform the multiplication
+	resultNanos := int64(float64(totalNanos) * factor)
+
+	// Convert back to units and nanos
+	units := resultNanos / nanosMod
+	nanos := int32(resultNanos % nanosMod)
+
+	// Ensure nanos is within valid range
+	if nanos < nanosMin || nanos > nanosMax {
+		return &productcatalogservice_rest_types.Money{}, ErrInvalidValue
+	}
+
+	return &productcatalogservice_rest_types.Money{
+		Units:        &units,
+		Nanos:        &nanos,
+		CurrencyCode: m.CurrencyCode,
+	}, nil
 }

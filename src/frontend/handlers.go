@@ -78,8 +78,10 @@ func (fe *frontendServer) homeHandler(w http.ResponseWriter, r *http.Request) {
 	cart := cartResponse.JSON200
 
 	type productView struct {
-		Item  productcatalogservice_rest_types.Product
-		Price *productcatalogservice_rest_types.Money
+		Item       productcatalogservice_rest_types.Product
+		Price      *productcatalogservice_rest_types.Money
+		Discount   *productcatalogservice_rest_types.Money
+		FinalPrice *productcatalogservice_rest_types.Money
 	}
 
 	products := *productsList
@@ -91,7 +93,14 @@ func (fe *frontendServer) homeHandler(w http.ResponseWriter, r *http.Request) {
 			renderHTTPError(r, w, errors.Wrapf(err, "could not convert currency for product #%s", *p.Id), http.StatusInternalServerError)
 			return
 		}
-		newPV := productView{p, price}
+
+		if p.Discount == nil {
+			renderHTTPError(r, w, errors.Errorf("could not calculate discount for product #%s", *p.Id), http.StatusInternalServerError)
+			return
+		}
+		discount := money.Must(money.MultiplyFloat(price, float64(*p.Discount)))
+		finalPrice := money.Must(money.Sum(price, money.Negate(discount)))
+		newPV := productView{p, price, discount, finalPrice}
 		ps[i] = newPV
 	}
 
@@ -150,10 +159,19 @@ func (fe *frontendServer) productHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	if p.Discount == nil {
+		renderHTTPError(r, w, errors.Errorf("Could not calculate discount for product #%s", *p.Id), http.StatusInternalServerError)
+		return
+	}
+	discount := money.Must(money.MultiplyFloat(price, float64(*p.Discount)))
+	finalPrice := money.Must(money.Sum(price, money.Negate(discount)))
+
 	product := struct {
-		Item  productcatalogservice_rest_types.Product
-		Price *productcatalogservice_rest_types.Money
-	}{*p, price}
+		Item       productcatalogservice_rest_types.Product
+		Price      *productcatalogservice_rest_types.Money
+		Discount   *productcatalogservice_rest_types.Money
+		FinalPrice *productcatalogservice_rest_types.Money
+	}{*p, price, discount, finalPrice}
 
 	if err := templates.ExecuteTemplate(w, "product", map[string]interface{}{
 		"session_id": sessionID(r),
@@ -247,12 +265,20 @@ func (fe *frontendServer) viewCartHandler(w http.ResponseWriter, r *http.Request
 		Quantity   int32
 		IsAPresent bool
 		Price      *productcatalogservice_rest_types.Money
+		FinalPrice *productcatalogservice_rest_types.Money
+		Discount   *productcatalogservice_rest_types.Money
 	}
+
 	items := make([]cartItemView, len(*cart.Items))
 	currentCurrencyObj := currentCurrency(r)
 	zeroNanos := int32(0)
 	zeroUnits := int64(0)
 	totalPrice := &productcatalogservice_rest_types.Money{
+		CurrencyCode: &currentCurrencyObj,
+		Nanos:        &zeroNanos,
+		Units:        &zeroUnits,
+	}
+	totalDiscount := &productcatalogservice_rest_types.Money{
 		CurrencyCode: &currentCurrencyObj,
 		Nanos:        &zeroNanos,
 		Units:        &zeroUnits,
@@ -272,21 +298,41 @@ func (fe *frontendServer) viewCartHandler(w http.ResponseWriter, r *http.Request
 			renderHTTPError(r, w, errors.Wrapf(err, "could not convert currency for product #%s", *item.ProductId), http.StatusInternalServerError)
 			return
 		}
-
 		logrus.Debugf("Price is %+v", price)
 
 		multPrice := money.MultiplySlow(price, uint32(*item.Quantity))
+
+		if p.Discount == nil {
+			renderHTTPError(r, w, errors.Errorf("Could not calculate discount for product #%s", *item.ProductId), http.StatusInternalServerError)
+			return
+		}
+
+		multDiscount, err := money.MultiplyFloat(price, float64(*p.Discount))
+		if err != nil {
+			renderHTTPError(r, w, errors.Wrapf(err, "could not calculate discount for product #%s", *item.ProductId), http.StatusInternalServerError)
+			return
+		}
+		finalPrice := money.Must(money.Sum(multPrice, money.Negate(multDiscount)))
 
 		prod := *p
 		quan := *item.Quantity
 
 		items[i] = cartItemView{
-			Item:     prod,
-			Quantity: quan,
-			Price:    multPrice,
+			Item:       prod,
+			Quantity:   quan,
+			Price:      multPrice,
+			FinalPrice: finalPrice,
+			Discount:   multDiscount,
 		}
 
 		totalPrice = money.Must(money.Sum(totalPrice, multPrice))
+		totalDiscount = money.Must(money.Sum(totalDiscount, multDiscount))
+	}
+
+	totalCost, err := money.Sum(totalPrice, money.Negate(totalDiscount))
+	if err != nil {
+		renderHTTPError(r, w, errors.Wrapf(err, "could not calculate discount for cart"), http.StatusInternalServerError)
+		return
 	}
 
 	year := time.Now().Year()
@@ -299,7 +345,9 @@ func (fe *frontendServer) viewCartHandler(w http.ResponseWriter, r *http.Request
 		"cart_size": cartSize(*cart.Items),
 		//"shipping_cost":     shippingCost,
 		"show_currency":    true,
-		"total_cost":       totalPrice,
+		"total_cost":       totalCost,
+		"total_value":      totalPrice,
+		"total_discount":   totalDiscount,
 		"items":            items,
 		"expiration_years": []int{year, year + 1, year + 2, year + 3, year + 4},
 		"platform_css":     plat.css,
