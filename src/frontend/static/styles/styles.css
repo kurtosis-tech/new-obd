@@ -342,6 +342,11 @@ main {
   margin-bottom: 8px;
 }
 
+.hot-product-card-original-price {
+  font-size: 14px;
+  text-decoration: line-through;
+}
+
 .hot-product-card-price {
   font-size: 14px;
 }
@@ -417,6 +422,11 @@ similar to that of the hot-products-row.
 
 .h-product .product-price {
   font-size: 28px;
+}
+
+.h-product .product-original-price {
+  font-size: 28px;
+  text-decoration: line-through;
 }
 
 .h-product .product-info .product-wrapper {

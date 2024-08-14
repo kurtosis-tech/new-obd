@@ -31,6 +31,7 @@ type Money struct {
 type Product struct {
 	Categories  *[]string `json:"categories,omitempty"`
 	Description *string   `json:"description,omitempty"`
+	Discount    *float32  `json:"discount,omitempty"`
 	Id          *string   `json:"id,omitempty"`
 	Name        *string   `json:"name,omitempty"`
 	Picture     *string   `json:"picture,omitempty"`

@@ -2,11 +2,12 @@ package main
 
 import (
 	"fmt"
+	"net"
+
 	productcatalogservice_server_rest_server "github.com/kurtosis-tech/new-obd/src/productcatalogservice/api/http_rest/server"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/sirupsen/logrus"
-	"net"
 )
 
 const (

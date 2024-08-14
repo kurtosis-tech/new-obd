@@ -81,8 +81,11 @@
                                 </div>
                                 {{end}}
                                 <div class="col pr-md-0 text-right">
-                                    <strong>
+                                    <div class="cart-item-original-price col pr-md-0 text-right">
                                         {{ renderMoney .Price }}
+                                    </div>
+                                    <strong>
+                                        {{ renderMoney .FinalPrice }}
                                     </strong>
                                 </div>
                             </div>
@@ -93,6 +96,16 @@
                     <div class="row cart-summary-shipping-row">
                         <div class="col pl-md-0">Shipping</div>
                         <div class="col pr-md-0 text-right">{{ renderMoney .shipping_cost }}</div>
+                    </div>
+
+                    <div class="row cart-summary-total-value-row">
+                        <div class="col pl-md-0">Total Value</div>
+                        <div class="col pr-md-0 text-right">{{ renderMoney .total_value }}</div>
+                    </div>
+
+                    <div class="row cart-summary-total-discount-row">
+                        <div class="col pl-md-0">Total Discount</div>
+                        <div class="col pr-md-0 text-right">{{ renderMoney .total_discount }}</div>
                     </div>
 
                     <div class="row cart-summary-total-row">

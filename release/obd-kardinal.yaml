@@ -104,7 +104,7 @@ spec:
     spec:
       containers:
         - name: server
-          image: kurtosistech/frontend:main
+          image: kurtosistech/frontend:demo-on-sale
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
@@ -286,7 +286,7 @@ spec:
       terminationGracePeriodSeconds: 5
       containers:
         - name: server
-          image: kurtosistech/productcatalogservice:main
+          image: kurtosistech/productcatalogservice:demo-on-sale
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8070
