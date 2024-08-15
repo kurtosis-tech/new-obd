@@ -59,7 +59,7 @@ func retryConnect(dsn string, maxRetries int, initialBackoff time.Duration, back
 	backoff := initialBackoff
 
 	for i := 0; i < maxRetries; i++ {
-		// Need to change the resolver to resolve all addresses to use tcp4 instead of 6
+		// Need to change the resolver to resolve all addresses to use ipv4 instead of ipv6
 		net.DefaultResolver = &net.Resolver{
 			PreferGo: true,
 			Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
