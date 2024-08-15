@@ -26,7 +26,7 @@ spec:
                 - all
             privileged: false
             readOnlyRootFilesystem: true
-          image: tedim52/cartservice:latest
+          image: tedim52/newobd-cartservice:0.0.1
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8090
@@ -51,15 +51,15 @@ spec:
             # if POSTGRES is set, uses this to connect
             # otherwise uses environment variables below
             - name: POSTGRES
-              value: "postgresql://cart_owner:EVnF8U0GlPTw@ep-hidden-union-a5egskrj.us-east-2.aws.neon.tech/cart?sslmode=require"
+              value: """
             - name: PORT
               value: "8090"
             - name: DB_USERNAME
-              value: "tedidb_owner"
+              value: "postgresuser"
             - name: DB_PASSWORD
-              value: "6TJ3sBMkQzcg"
+              value: "postgrespass"
             - name: DB_HOST
-              value: "ep-jolly-sun-a5ve8gh1.us-east-2.aws.neon.tech"
+              value: "postgres"
             - name: DB_PORT
               value: "5432"
             - name: DB_NAME
@@ -74,13 +74,13 @@ metadata:
     version: v1
   annotations:
     kardinal.dev.service/plugins: | 
-      - name: github.com/kurtosis-tech/neondb-plugin
+      - name: https://github.com/kurtosis-tech/neondb-plugin.git
         type: external
         servicename: neon-postgres-db
         args:
-          NEON_API_KEY: "9z6p12le5ves63eje5177vd1c6asmd8gmg350yycsfi2aqjnyeqrbp4tx6fewbjk"
-          NEON_PROJECT_ID: "twilight-block-07621069"
-          NEON_FORK_FROM_BRANCH_ID: "br-white-smoke-a5azi9yl"
+          NEON_API_KEY: ""
+          NEON_PROJECT_ID: """
+          NEON_FORK_FROM_BRANCH_ID: ""
 spec:
   type: ClusterIP
   selector:
@@ -91,7 +91,6 @@ spec:
       targetPort: 8090
       protocol: TCP
       appProtocol: HTTP
-
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -115,7 +114,7 @@ spec:
     spec:
       containers:
         - name: server
-          image: leoporoli/newobd-frontend:0.0.5
+          image: leoporoli/newobd-frontend:0.0.6
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
@@ -155,7 +154,7 @@ metadata:
   annotations:
     kardinal.dev.service/dependencies: "productcatalogservice:http,cartservice:http"
     kardinal.dev.service/plugins: |
-      - name: github.com/kurtosis-tech/free-currency-api-plugin
+      - name: https://github.com/kurtosis-tech/free-currency-api-plugin.git
         type: external
         servicename: free-currency-api
         args:
