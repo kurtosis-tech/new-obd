@@ -42,8 +42,8 @@ spec:
           env:
             - name: ADDRESS
               value: ":8080"
-            - name: FREECURRENCYAPIKEY
-              value: "fca_live_VKZlykCWEiFcpBHnw74pzd4vLi04q1h9JySbVHDF"
+            - name: JSDELIVRAPIKEY
+              value: "prod"
             - name: CARTSERVICEHOST
               value: cartservice
             - name: PRODUCTCATALOGSERVICEHOST
