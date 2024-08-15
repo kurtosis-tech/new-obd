@@ -48,6 +48,13 @@
               </select>
               <img src="/static/icons/Hipster_DownArrow.svg" alt="">
             </div>
+            {{if $.is_present_feature}}
+              <div class="product-present-checkbox">
+                <img src="/static/images/present.png" alt="present icon">
+                <label for="present">Is a present?:</label>
+                <input type="checkbox" id="present" name="present">
+              </div>
+            {{end}}
             <button type="submit" class="cymbal-button-primary">Add To Cart</button>
           </form>
         </div>

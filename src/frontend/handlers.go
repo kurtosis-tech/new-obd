@@ -17,6 +17,14 @@ package main
 import (
 	"context"
 	"fmt"
+	"html/template"
+	"log"
+	"net/http"
+	"os"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/gorilla/mux"
 	cartservice_rest_types "github.com/kurtosis-tech/new-obd/src/cartservice/api/http_rest/types"
 	"github.com/kurtosis-tech/new-obd/src/frontend/consts"
@@ -24,14 +32,6 @@ import (
 	productcatalogservice_rest_types "github.com/kurtosis-tech/new-obd/src/productcatalogservice/api/http_rest/types"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"html/template"
-	"log"
-	"net/http"
-	"os"
-	"strconv"
-	"time"
-
-	"strings"
 )
 
 type platformDetails struct {
@@ -49,8 +49,11 @@ var (
 	plat platformDetails
 )
 
-func (fe *frontendServer) homeHandler(w http.ResponseWriter, r *http.Request) {
+const (
+	userID = "0494c5e0-dde0-48fa-a6d8-f7962f5476bf"
+)
 
+func (fe *frontendServer) homeHandler(w http.ResponseWriter, r *http.Request) {
 	currencies, err := fe.currencyService.GetSupportedCurrencies(r.Context())
 	if err != nil {
 		renderHTTPError(r, w, errors.Wrapf(err, "error retrieving currencies"), http.StatusInternalServerError)
@@ -66,7 +69,7 @@ func (fe *frontendServer) homeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	productsList := productResponse.JSON200
 
-	cartResponse, err := fe.cartService.GetCartUserIdWithResponse(r.Context(), sessionID(r), setKardinalReqEditorFcn)
+	cartResponse, err := fe.cartService.GetCartUserIdWithResponse(r.Context(), userID, setKardinalReqEditorFcn)
 	if err != nil {
 		renderHTTPError(r, w, errors.Wrap(err, "could not retrieve cart"), http.StatusInternalServerError)
 		return
@@ -133,7 +136,7 @@ func (fe *frontendServer) productHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	cartResponse, err := fe.cartService.GetCartUserIdWithResponse(r.Context(), sessionID(r), setKardinalReqEditorFcn)
+	cartResponse, err := fe.cartService.GetCartUserIdWithResponse(r.Context(), userID, setKardinalReqEditorFcn)
 	if err != nil {
 		renderHTTPError(r, w, errors.Wrap(err, "could not retrieve cart"), http.StatusInternalServerError)
 		return
@@ -161,10 +164,11 @@ func (fe *frontendServer) productHandler(w http.ResponseWriter, r *http.Request)
 		"currencies":    currencies,
 		"product":       product,
 		//"recommendations":   recommendations,
-		"cart_size":       cartSize(*cart.Items),
-		"platform_css":    plat.css,
-		"platform_name":   plat.provider,
-		"is_cymbal_brand": isCymbalBrand,
+		"cart_size":          cartSize(*cart.Items),
+		"platform_css":       plat.css,
+		"platform_name":      plat.provider,
+		"is_cymbal_brand":    isCymbalBrand,
+		"is_present_feature": false,
 		//"deploymentDetails": deploymentDetailsMap,
 	}); err != nil {
 		log.Println(err)
@@ -189,7 +193,7 @@ func (fe *frontendServer) addToCartHandler(w http.ResponseWriter, r *http.Reques
 	p := productResponse.JSON200
 
 	quantityInt32 := int32(quantity)
-	userId := sessionID(r)
+	userId := userID
 
 	body := cartservice_rest_types.AddItemRequest{
 		Item: &cartservice_rest_types.CartItem{
@@ -198,7 +202,7 @@ func (fe *frontendServer) addToCartHandler(w http.ResponseWriter, r *http.Reques
 		},
 		UserId: &userId,
 	}
-	postCartResponse, err := fe.cartService.PostCartWithResponse(r.Context(), body)
+	postCartResponse, err := fe.cartService.PostCartWithResponse(r.Context(), body, setKardinalReqEditorFcn)
 	logrus.Infof("Post cart response status code: %d", postCartResponse.StatusCode())
 	if postCartResponse.StatusCode() != 200 || err != nil {
 		renderHTTPError(r, w, errors.Wrapf(err, "could not retrieve execute post cart request for product #%s", productID), http.StatusInternalServerError)
@@ -212,7 +216,7 @@ func (fe *frontendServer) addToCartHandler(w http.ResponseWriter, r *http.Reques
 func (fe *frontendServer) emptyCartHandler(w http.ResponseWriter, r *http.Request) {
 	setKardinalReqEditorFcn := getSetTraceIdHeaderRequestEditorFcn(r)
 
-	userId := sessionID(r)
+	userId := userID
 	if _, err := fe.cartService.DeleteCartUserId(r.Context(), userId, setKardinalReqEditorFcn); err != nil {
 		renderHTTPError(r, w, errors.Wrap(err, "failed to empty cart"), http.StatusInternalServerError)
 		return
@@ -230,7 +234,7 @@ func (fe *frontendServer) viewCartHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	cartResponse, err := fe.cartService.GetCartUserIdWithResponse(r.Context(), sessionID(r), setKardinalReqEditorFcn)
+	cartResponse, err := fe.cartService.GetCartUserIdWithResponse(r.Context(), userID, setKardinalReqEditorFcn)
 	if err != nil {
 		renderHTTPError(r, w, errors.Wrap(err, "could not retrieve cart"), http.StatusInternalServerError)
 		return
@@ -239,9 +243,10 @@ func (fe *frontendServer) viewCartHandler(w http.ResponseWriter, r *http.Request
 	cart := cartResponse.JSON200
 
 	type cartItemView struct {
-		Item     productcatalogservice_rest_types.Product
-		Quantity int32
-		Price    *productcatalogservice_rest_types.Money
+		Item       productcatalogservice_rest_types.Product
+		Quantity   int32
+		IsAPresent bool
+		Price      *productcatalogservice_rest_types.Money
 	}
 	items := make([]cartItemView, len(*cart.Items))
 	currentCurrencyObj := currentCurrency(r)
@@ -256,7 +261,7 @@ func (fe *frontendServer) viewCartHandler(w http.ResponseWriter, r *http.Request
 	cartItems := *cart.Items
 
 	for i, item := range cartItems {
-		productResponse, err := fe.productCatalogService.GetProductsIdWithResponse(r.Context(), *item.ProductId)
+		productResponse, err := fe.productCatalogService.GetProductsIdWithResponse(r.Context(), *item.ProductId, setKardinalReqEditorFcn)
 		if err != nil {
 			renderHTTPError(r, w, errors.Wrapf(err, "could not retrieve product #%s", *item.ProductId), http.StatusInternalServerError)
 			return
@@ -280,6 +285,7 @@ func (fe *frontendServer) viewCartHandler(w http.ResponseWriter, r *http.Request
 			Quantity: quan,
 			Price:    multPrice,
 		}
+
 		totalPrice = money.Must(money.Sum(totalPrice, multPrice))
 	}
 
@@ -381,7 +387,7 @@ func renderCurrencyLogo(currencyCode string) string {
 		"GBP": "£",
 	}
 
-	logo := "$" //default
+	logo := "$" // default
 	if val, ok := logos[currencyCode]; ok {
 		logo = val
 	}
@@ -415,10 +421,9 @@ func cartSize(c []cartservice_rest_types.CartItem) int {
 }
 
 func getSetTraceIdHeaderRequestEditorFcn(upsTreamRequest *http.Request) func(ctx context.Context, req *http.Request) error {
-
 	traceID := upsTreamRequest.Header.Get(consts.KardinalTraceIdHeaderKey)
 
-	var setKardinalReqEditorFcn = func(ctx context.Context, req *http.Request) error {
+	setKardinalReqEditorFcn := func(ctx context.Context, req *http.Request) error {
 		req.Header.Set(consts.KardinalTraceIdHeaderKey, traceID)
 		return nil
 	}

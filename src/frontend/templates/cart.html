@@ -75,6 +75,11 @@
                                 <div class="col">
                                     Quantity: {{ .Quantity }}
                                 </div>
+                                {{if .IsAPresent}}
+                                <div class="col">
+                                    <img class="present" src="/static/images/present.png" alt="present icon">
+                                </div>
+                                {{end}}
                                 <div class="col pr-md-0 text-right">
                                     <strong>
                                         {{ renderMoney .Price }}

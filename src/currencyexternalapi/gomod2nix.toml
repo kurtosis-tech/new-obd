@@ -1,0 +1,33 @@
+schema = 3
+
+[mod]
+  [mod."github.com/davecgh/go-spew"]
+    version = "v1.1.1"
+    hash = "sha256-nhzSUrE1fCkN0+RL04N4h8jWmRFPPPWbCuDc7Ss0akI="
+  [mod."github.com/golang/protobuf"]
+    version = "v1.4.3"
+    hash = "sha256-GoytLjWoBKfZq3eBDa4rGQNP2la2IrpkFSWjsH/sPBI="
+  [mod."github.com/pmezard/go-difflib"]
+    version = "v1.0.0"
+    hash = "sha256-/FtmHnaGjdvEIKAJtrUfEhV7EVo5A/eYrtdnUkuxLDA="
+  [mod."github.com/sirupsen/logrus"]
+    version = "v1.7.0"
+    hash = "sha256-VClDP4DJDdMFTMGWR7I8L4hQRMU7cOphLRyUfxCvnNY="
+  [mod."github.com/stretchr/testify"]
+    version = "v1.8.0"
+    hash = "sha256-LDxBAebK+A06y4vbH7cd1sVBOameIY81Xm8/9OPZh7o="
+  [mod."golang.org/x/sys"]
+    version = "v0.0.0-20200323222414-85ca7c5b95cd"
+    hash = "sha256-Eg/nZTMQdH2BDWEd6YzQTybn8F6wNuWkQB5ZWJnjDtI="
+  [mod."google.golang.org/genproto"]
+    version = "v0.0.0-20200526211855-cb27e3aa2013"
+    hash = "sha256-wFVFmWkQLFRBBNTt3C0Dy3GChkYEYnaDLVbQhyq2K1g="
+  [mod."google.golang.org/grpc"]
+    version = "v1.42.0"
+    hash = "sha256-p97BCecu+L1Lk2/Yj0JEVJP8YVxikOxGw+IbNCsA/go="
+  [mod."google.golang.org/protobuf"]
+    version = "v1.25.0"
+    hash = "sha256-3sf57K5A0nmA1UmDe+6FUNJI6UR+SfVyZWNv+2TGHT4="
+  [mod."gopkg.in/yaml.v3"]
+    version = "v3.0.1"
+    hash = "sha256-FqL9TKYJ0XkNwJFnq9j0VvJ5ZUU1RvH/52h/f5bkYAU="
