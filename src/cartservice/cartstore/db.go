@@ -29,7 +29,7 @@ func NewDb(
 	if uri != "" {
 		dsn = uri
 	} else {
-		dsn = fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=require", host, username, password, name, port)
+		dsn = fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s", host, username, password, name, port)
 	}
 	maxRetries := 5
 	initialBackoff := 1 * time.Second
