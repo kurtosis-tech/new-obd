@@ -21,7 +21,7 @@ FROM alpine:latest
 RUN apk --update --no-cache add ca-certificates make protoc
 
 # These tools are for debuggin the containres
-RUN apk update && apk add --no-cache \
+RUN apk add --no-cache \
     bash \
     curl \
     wget \
