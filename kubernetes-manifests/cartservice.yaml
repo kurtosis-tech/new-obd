@@ -47,6 +47,10 @@ spec:
             timeoutSeconds: 5
             failureThreshold: 3
           env:
+            # if POSTGRES is set, uses this to connect
+            # otherwise uses environment variables below
+            - name: POSTGRES
+              value: ""
             - name: PORT
               value: "8090"
             - name: DB_USERNAME
