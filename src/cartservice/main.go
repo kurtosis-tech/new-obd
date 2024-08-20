@@ -25,6 +25,8 @@ var (
 func main() {
 	logrus.Info("Running REST API server...")
 
+	logrus.Info("[LEO-DEBUG] con desakatado")
+
 	// This is how you set up a basic Echo router
 	echoRouter := echo.New()
 	echoRouter.Use(middleware.Logger())

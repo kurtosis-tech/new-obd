@@ -4,32 +4,33 @@ version_settings(constraint='>=0.22.2')
 # This allows Tilt to build and push images directly to Minikube's Docker daemon
 local('eval $(minikube docker-env)')
 
-# POSTGRES
-k8s_yaml('./kubernetes-manifests/postgres.yaml')
-
 # CART SERVICE
 docker_build(
-    'cartservice',
+    'kurtosistech/cartservice',
     context='./src/cartservice',
     dockerfile='./src/cartservice/Dockerfile',
 )
 
-k8s_yaml('./kubernetes-manifests/cartservice.yaml')
-
 # PRODUCT CATALOG SERVICE
 docker_build(
-    'productcatalogservice',
+    'kurtosistech/productcatalogservice',
     context='./src/productcatalogservice',
     dockerfile='./src/productcatalogservice/Dockerfile',
 )
 
-k8s_yaml('./kubernetes-manifests/productcatalogservice.yaml')
-
 # FRONTEND
 docker_build(
-    'frontend',
+    'kurtosistech/frontend',
     context='./src',
+    ignore='./src/cartservice',
     dockerfile='./src/frontend.dockerfile',
 )
 
-k8s_yaml('./kubernetes-manifests/frontend.yaml')
+k8s_yaml('./kubernetes-manifests/trace-router.yaml')
+
+apply_command = ['python3', 'kontrol-get-yaml.py']
+
+k8s_yaml(local(apply_command))
+
+k8s_resource( new_name='istio-ingressgateway',objects=['istio-ingressgateway:Service:istio-system'], port_forwards=[8080, 8443])
+
