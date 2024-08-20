@@ -3,6 +3,7 @@ kind: Service
 metadata:
   name: postgres
   annotations:
+    kardinal.dev.service/shared: "true"
     kardinal.dev.service/plugins: |
       - name: github.com/kurtosis-tech/postgres-seed-plugin
         args:
