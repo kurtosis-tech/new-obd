@@ -185,7 +185,7 @@ header .h-control :-moz-placeholder {
 
 header .navbar.sub-navbar {
   height: 60px;
-  background-color: white;
+  background-color: #bd9898;
   font-size: 15px;
   color: #b4b2bb;
   padding-top: 0;
@@ -333,6 +333,7 @@ main {
 .hot-product-card-name {
   margin-top: 8px;
   font-size: 18px;
+  color: #2c0878;
 }
 
 .hot-product-card-brand {

@@ -19,7 +19,7 @@ spec:
       terminationGracePeriodSeconds: 5
       containers:
         - name: server
-          image: productcatalogservice
+          image: kurtosistech/productcatalogservice
           ports:
             - containerPort: 8070
           readinessProbe:

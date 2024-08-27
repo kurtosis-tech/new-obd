@@ -1,0 +1,976 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  creationTimestamp: null
+  labels:
+    istio-injection: enabled
+  name: prod
+spec: { }
+status: { }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: cartservice
+    version: prod
+  name: cartservice-prod
+  namespace: prod
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cartservice
+      version: prod
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        sidecar.istio.io/inject: "true"
+      creationTimestamp: null
+      labels:
+        app: cartservice
+        version: prod
+    spec:
+      containers:
+        - env:
+            - name: POSTGRES
+            - name: PORT
+              value: "8090"
+            - name: DB_USERNAME
+              value: postgresuser
+            - name: DB_PASSWORD
+              value: postgrespass
+            - name: DB_HOST
+              value: postgres
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_NAME
+              value: cart
+          image: kurtosistech/cartservice:main
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /health
+              port: 8090
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            timeoutSeconds: 5
+          name: server
+          ports:
+            - containerPort: 8090
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /health
+              port: 8090
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          resources: { }
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - all
+            privileged: false
+            readOnlyRootFilesystem: true
+      terminationGracePeriodSeconds: 5
+status: { }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: frontend
+    version: prod
+  name: frontend-prod
+  namespace: prod
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+      version: prod
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        sidecar.istio.io/inject: "true"
+      creationTimestamp: null
+      labels:
+        app: frontend
+        version: prod
+    spec:
+      containers:
+        - env:
+            - name: ADDRESS
+              value: :8080
+            - name: JSDELIVRAPIKEY
+              value: prod
+            - name: CARTSERVICEHOST
+              value: cartservice
+            - name: PRODUCTCATALOGSERVICEHOST
+              value: productcatalogservice
+          image: kurtosistech/frontend:main
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            httpGet:
+              httpHeaders:
+                - name: Cookie
+                  value: shop_session-id=x-liveness-probe
+              path: /_healthz
+              port: 8080
+            initialDelaySeconds: 10
+          name: server
+          ports:
+            - containerPort: 8080
+          readinessProbe:
+            httpGet:
+              httpHeaders:
+                - name: Cookie
+                  value: shop_session-id=x-readiness-probe
+              path: /_healthz
+              port: 8080
+            initialDelaySeconds: 10
+          resources: { }
+status: { }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: postgres
+    version: prod
+  name: postgres-prod
+  namespace: prod
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+      version: prod
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        sidecar.istio.io/inject: "true"
+      creationTimestamp: null
+      labels:
+        app: postgres
+        version: prod
+    spec:
+      containers:
+        - env:
+            - name: POSTGRES_DB
+              value: cart
+            - name: POSTGRES_USER
+              value: postgresuser
+            - name: POSTGRES_PASSWORD
+              value: postgrespass
+          image: postgres:14
+          imagePullPolicy: IfNotPresent
+          name: postgres
+          ports:
+            - containerPort: 5432
+          resources: { }
+          volumeMounts:
+            - mountPath: /var/lib/postgresql/data
+              name: postgres-data
+      volumes:
+        - emptyDir: { }
+          name: postgres-data
+status: { }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: productcatalogservice
+    version: prod
+  name: productcatalogservice-prod
+  namespace: prod
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: productcatalogservice
+      version: prod
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        sidecar.istio.io/inject: "true"
+      creationTimestamp: null
+      labels:
+        app: productcatalogservice
+        version: prod
+    spec:
+      containers:
+        - env:
+            - name: PORT
+              value: "8070"
+          image: kurtosistech/productcatalogservice:main
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /health
+              port: 8070
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            timeoutSeconds: 5
+          name: server
+          ports:
+            - containerPort: 8070
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /health
+              port: 8070
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          resources: { }
+      terminationGracePeriodSeconds: 5
+status: { }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  labels:
+    app: cartservice
+  name: cartservice
+  namespace: prod
+spec:
+  ports:
+    - appProtocol: HTTP
+      name: http
+      port: 8090
+      protocol: TCP
+      targetPort: 8090
+  selector:
+    app: cartservice
+  type: ClusterIP
+status:
+  loadBalancer: { }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  labels:
+    app: frontend
+  name: frontend
+  namespace: prod
+spec:
+  ports:
+    - appProtocol: HTTP
+      name: http
+      port: 80
+      protocol: TCP
+      targetPort: 8080
+  selector:
+    app: frontend
+  type: ClusterIP
+status:
+  loadBalancer: { }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  labels:
+    app: postgres
+  name: postgres
+  namespace: prod
+spec:
+  ports:
+    - name: tcp
+      port: 5432
+      protocol: TCP
+      targetPort: 5432
+  selector:
+    app: postgres
+  type: ClusterIP
+status:
+  loadBalancer: { }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  labels:
+    app: productcatalogservice
+  name: productcatalogservice
+  namespace: prod
+spec:
+  ports:
+    - appProtocol: HTTP
+      name: http
+      port: 8070
+      protocol: TCP
+      targetPort: 8070
+  selector:
+    app: productcatalogservice
+  type: ClusterIP
+status:
+  loadBalancer: { }
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  creationTimestamp: null
+  name: cartservice
+  namespace: prod
+spec:
+  hosts:
+    - cartservice
+  http:
+    - match:
+        - headers:
+            x-kardinal-destination:
+              exact: cartservice-prod
+      route:
+        - destination:
+            host: cartservice
+            subset: prod
+status: { }
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  creationTimestamp: null
+  name: frontend
+  namespace: prod
+spec:
+  gateways:
+    - frontend-external
+  hosts:
+    - prod.app.localhost
+  http:
+    - match:
+        - headers:
+            x-kardinal-destination:
+              exact: frontend-prod
+        - headers:
+            x-kardinal-destination:
+              exact: prod.app.localhost-prod
+      route:
+        - destination:
+            host: frontend
+            subset: prod
+status: { }
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  creationTimestamp: null
+  name: postgres
+  namespace: prod
+spec:
+  hosts:
+    - postgres
+  tcp:
+    - match:
+        - port: 5432
+          sourceLabels:
+            version: prod
+      route:
+        - destination:
+            host: postgres
+            port:
+              number: 5432
+            subset: prod
+          weight: 100
+status: { }
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  creationTimestamp: null
+  name: productcatalogservice
+  namespace: prod
+spec:
+  hosts:
+    - productcatalogservice
+  http:
+    - match:
+        - headers:
+            x-kardinal-destination:
+              exact: productcatalogservice-prod
+      route:
+        - destination:
+            host: productcatalogservice
+            subset: prod
+status: { }
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  creationTimestamp: null
+  name: cartservice
+  namespace: prod
+spec:
+  host: cartservice
+  subsets:
+    - labels:
+        version: prod
+      name: prod
+status: { }
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  creationTimestamp: null
+  name: frontend
+  namespace: prod
+spec:
+  host: frontend
+  subsets:
+    - labels:
+        version: prod
+      name: prod
+status: { }
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  creationTimestamp: null
+  name: postgres
+  namespace: prod
+spec:
+  host: postgres
+  subsets:
+    - labels:
+        version: prod
+      name: prod
+status: { }
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  creationTimestamp: null
+  name: productcatalogservice
+  namespace: prod
+spec:
+  host: productcatalogservice
+  subsets:
+    - labels:
+        version: prod
+      name: prod
+status: { }
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: EnvoyFilter
+metadata:
+  creationTimestamp: null
+  name: cartservice-inbound-trace-id-check
+  namespace: prod
+spec:
+  configPatches:
+    - applyTo: HTTP_FILTER
+      match:
+        context: SIDECAR_INBOUND
+        listener:
+          filterChain:
+            filter:
+              name: envoy.filters.network.http_connection_manager
+      patch:
+        operation: INSERT_BEFORE
+        value:
+          name: envoy.lua
+          typed_config:
+            '@type': type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua
+            inlineCode: "\nfunction envoy_on_request(request_handle)\n  local headers
+            = request_handle:headers()\n  local trace_id = headers:get(\"x-kardinal-trace-id\")\n
+            \ \n  if not trace_id then\n    request_handle:respond(\n      {[\":status\"]
+            = \"400\"},\n      \"Missing required x-kardinal-trace-id header\"\n    )\n
+            \ end\nend\n"
+  workloadSelector:
+    labels:
+      app: cartservice
+status: { }
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: EnvoyFilter
+metadata:
+  creationTimestamp: null
+  name: cartservice-outbound-trace-router
+  namespace: prod
+spec:
+  configPatches:
+    - applyTo: HTTP_FILTER
+      match:
+        context: SIDECAR_OUTBOUND
+        listener:
+          filterChain:
+            filter:
+              name: envoy.filters.network.http_connection_manager
+      patch:
+        operation: INSERT_BEFORE
+        value:
+          name: envoy.lua
+          typed_config:
+            '@type': type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua
+            inlineCode: "\nlocal trace_header_priorities = {\"x-kardinal-trace-id\",
+            \"x-b3-traceid\", \"x-request-id\", \"x-cloud-trace-context\", \"x-amzn-trace-id\",
+            \"traceparent\", \"uber-trace-id\", \"x-datadog-trace-id\"}\n\nfunction
+            get_trace_id(headers)\n  for _, header_name in ipairs(trace_header_priorities)
+            do\n    local trace_id = headers:get(header_name)\n    if trace_id then\n
+            \     return trace_id, header_name\n    end\n  end\n\n  return nil, nil\nend\n\nfunction
+            envoy_on_request(request_handle)\n  local headers = request_handle:headers()\n
+            \ local trace_id, source_header = get_trace_id(headers)\n  local hostname
+            = headers:get(\":authority\")\n  \n  if not trace_id then\n    request_handle:logWarn(\"No
+            valid trace ID found in request headers\")\n    request_handle:respond(\n
+            \     {[\":status\"] = \"400\"},\n      \"Missing required trace ID header\"\n
+            \   )\n    return\n  end\n\n  if source_header ~= \"x-kardinal-trace-id\"
+            then\n    request_handle:headers():add(\"x-kardinal-trace-id\", trace_id)\n
+            \   request_handle:logInfo(\"Set x-kardinal-trace-id from \" .. source_header
+            .. \": \" .. trace_id)\n  end\n\n  local destination = determine_destination(request_handle,
+            trace_id, hostname)\n  request_handle:headers():add(\"x-kardinal-destination\",
+            destination)\nend\n\nfunction determine_destination(request_handle, trace_id,
+            hostname)\n  hostname = hostname:match(\"^([^:]+)\")\n  local headers,
+            body = request_handle:httpCall(\n    \"outbound|8080||trace-router.default.svc.cluster.local\",\n
+            \   {\n      [\":method\"] = \"GET\",\n      [\":path\"] = \"/route?trace_id=\"
+            .. trace_id .. \"&hostname=\" .. hostname,\n      [\":authority\"] = \"trace-router.default.svc.cluster.local\"\n
+            \   },\n    \"\",\n    5000\n  )\n  \n  if not headers or headers[\":status\"]
+            ~= \"200\" then\n    request_handle:logWarn(\"Failed to determine destination,
+            falling back to prod\")\n    return hostname .. \"-prod\"  -- Fallback
+            to prod\n  end\n  \n  return body\nend\n"
+  workloadSelector:
+    labels:
+      app: cartservice
+status: { }
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: EnvoyFilter
+metadata:
+  creationTimestamp: null
+  name: frontend-inbound-trace-id-check
+  namespace: prod
+spec:
+  configPatches:
+    - applyTo: HTTP_FILTER
+      match:
+        context: SIDECAR_INBOUND
+        listener:
+          filterChain:
+            filter:
+              name: envoy.filters.network.http_connection_manager
+      patch:
+        operation: INSERT_BEFORE
+        value:
+          name: envoy.lua
+          typed_config:
+            '@type': type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua
+            inlineCode: "\nfunction envoy_on_request(request_handle)\n  local headers
+            = request_handle:headers()\n  local trace_id = headers:get(\"x-kardinal-trace-id\")\n
+            \ \n  if not trace_id then\n    request_handle:respond(\n      {[\":status\"]
+            = \"400\"},\n      \"Missing required x-kardinal-trace-id header\"\n    )\n
+            \ end\nend\n"
+  workloadSelector:
+    labels:
+      app: frontend
+status: { }
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: EnvoyFilter
+metadata:
+  creationTimestamp: null
+  name: frontend-outbound-trace-router
+  namespace: prod
+spec:
+  configPatches:
+    - applyTo: HTTP_FILTER
+      match:
+        context: SIDECAR_OUTBOUND
+        listener:
+          filterChain:
+            filter:
+              name: envoy.filters.network.http_connection_manager
+      patch:
+        operation: INSERT_BEFORE
+        value:
+          name: envoy.lua
+          typed_config:
+            '@type': type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua
+            inlineCode: "\nlocal trace_header_priorities = {\"x-kardinal-trace-id\",
+            \"x-b3-traceid\", \"x-request-id\", \"x-cloud-trace-context\", \"x-amzn-trace-id\",
+            \"traceparent\", \"uber-trace-id\", \"x-datadog-trace-id\"}\n\nfunction
+            get_trace_id(headers)\n  for _, header_name in ipairs(trace_header_priorities)
+            do\n    local trace_id = headers:get(header_name)\n    if trace_id then\n
+            \     return trace_id, header_name\n    end\n  end\n\n  return nil, nil\nend\n\nfunction
+            envoy_on_request(request_handle)\n  local headers = request_handle:headers()\n
+            \ local trace_id, source_header = get_trace_id(headers)\n  local hostname
+            = headers:get(\":authority\")\n  \n  if not trace_id then\n    request_handle:logWarn(\"No
+            valid trace ID found in request headers\")\n    request_handle:respond(\n
+            \     {[\":status\"] = \"400\"},\n      \"Missing required trace ID header\"\n
+            \   )\n    return\n  end\n\n  if source_header ~= \"x-kardinal-trace-id\"
+            then\n    request_handle:headers():add(\"x-kardinal-trace-id\", trace_id)\n
+            \   request_handle:logInfo(\"Set x-kardinal-trace-id from \" .. source_header
+            .. \": \" .. trace_id)\n  end\n\n  local destination = determine_destination(request_handle,
+            trace_id, hostname)\n  request_handle:headers():add(\"x-kardinal-destination\",
+            destination)\nend\n\nfunction determine_destination(request_handle, trace_id,
+            hostname)\n  hostname = hostname:match(\"^([^:]+)\")\n  local headers,
+            body = request_handle:httpCall(\n    \"outbound|8080||trace-router.default.svc.cluster.local\",\n
+            \   {\n      [\":method\"] = \"GET\",\n      [\":path\"] = \"/route?trace_id=\"
+            .. trace_id .. \"&hostname=\" .. hostname,\n      [\":authority\"] = \"trace-router.default.svc.cluster.local\"\n
+            \   },\n    \"\",\n    5000\n  )\n  \n  if not headers or headers[\":status\"]
+            ~= \"200\" then\n    request_handle:logWarn(\"Failed to determine destination,
+            falling back to prod\")\n    return hostname .. \"-prod\"  -- Fallback
+            to prod\n  end\n  \n  return body\nend\n"
+  workloadSelector:
+    labels:
+      app: frontend
+status: { }
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: EnvoyFilter
+metadata:
+  creationTimestamp: null
+  name: productcatalogservice-inbound-trace-id-check
+  namespace: prod
+spec:
+  configPatches:
+    - applyTo: HTTP_FILTER
+      match:
+        context: SIDECAR_INBOUND
+        listener:
+          filterChain:
+            filter:
+              name: envoy.filters.network.http_connection_manager
+      patch:
+        operation: INSERT_BEFORE
+        value:
+          name: envoy.lua
+          typed_config:
+            '@type': type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua
+            inlineCode: "\nfunction envoy_on_request(request_handle)\n  local headers
+            = request_handle:headers()\n  local trace_id = headers:get(\"x-kardinal-trace-id\")\n
+            \ \n  if not trace_id then\n    request_handle:respond(\n      {[\":status\"]
+            = \"400\"},\n      \"Missing required x-kardinal-trace-id header\"\n    )\n
+            \ end\nend\n"
+  workloadSelector:
+    labels:
+      app: productcatalogservice
+status: { }
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: EnvoyFilter
+metadata:
+  creationTimestamp: null
+  name: productcatalogservice-outbound-trace-router
+  namespace: prod
+spec:
+  configPatches:
+    - applyTo: HTTP_FILTER
+      match:
+        context: SIDECAR_OUTBOUND
+        listener:
+          filterChain:
+            filter:
+              name: envoy.filters.network.http_connection_manager
+      patch:
+        operation: INSERT_BEFORE
+        value:
+          name: envoy.lua
+          typed_config:
+            '@type': type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua
+            inlineCode: "\nlocal trace_header_priorities = {\"x-kardinal-trace-id\",
+            \"x-b3-traceid\", \"x-request-id\", \"x-cloud-trace-context\", \"x-amzn-trace-id\",
+            \"traceparent\", \"uber-trace-id\", \"x-datadog-trace-id\"}\n\nfunction
+            get_trace_id(headers)\n  for _, header_name in ipairs(trace_header_priorities)
+            do\n    local trace_id = headers:get(header_name)\n    if trace_id then\n
+            \     return trace_id, header_name\n    end\n  end\n\n  return nil, nil\nend\n\nfunction
+            envoy_on_request(request_handle)\n  local headers = request_handle:headers()\n
+            \ local trace_id, source_header = get_trace_id(headers)\n  local hostname
+            = headers:get(\":authority\")\n  \n  if not trace_id then\n    request_handle:logWarn(\"No
+            valid trace ID found in request headers\")\n    request_handle:respond(\n
+            \     {[\":status\"] = \"400\"},\n      \"Missing required trace ID header\"\n
+            \   )\n    return\n  end\n\n  if source_header ~= \"x-kardinal-trace-id\"
+            then\n    request_handle:headers():add(\"x-kardinal-trace-id\", trace_id)\n
+            \   request_handle:logInfo(\"Set x-kardinal-trace-id from \" .. source_header
+            .. \": \" .. trace_id)\n  end\n\n  local destination = determine_destination(request_handle,
+            trace_id, hostname)\n  request_handle:headers():add(\"x-kardinal-destination\",
+            destination)\nend\n\nfunction determine_destination(request_handle, trace_id,
+            hostname)\n  hostname = hostname:match(\"^([^:]+)\")\n  local headers,
+            body = request_handle:httpCall(\n    \"outbound|8080||trace-router.default.svc.cluster.local\",\n
+            \   {\n      [\":method\"] = \"GET\",\n      [\":path\"] = \"/route?trace_id=\"
+            .. trace_id .. \"&hostname=\" .. hostname,\n      [\":authority\"] = \"trace-router.default.svc.cluster.local\"\n
+            \   },\n    \"\",\n    5000\n  )\n  \n  if not headers or headers[\":status\"]
+            ~= \"200\" then\n    request_handle:logWarn(\"Failed to determine destination,
+            falling back to prod\")\n    return hostname .. \"-prod\"  -- Fallback
+            to prod\n  end\n  \n  return body\nend\n"
+  workloadSelector:
+    labels:
+      app: productcatalogservice
+status: { }
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: EnvoyFilter
+metadata:
+  creationTimestamp: null
+  name: kardinal-gateway-tracing
+  namespace: istio-system
+spec:
+  configPatches:
+    - applyTo: HTTP_FILTER
+      match:
+        context: GATEWAY
+        listener:
+          filterChain:
+            filter:
+              name: envoy.filters.network.http_connection_manager
+      patch:
+        operation: INSERT_BEFORE
+        value:
+          name: envoy.lua
+          typed_config:
+            '@type': type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua
+            inlineCode: "\nlocal trace_header_priorities = {\"x-kardinal-trace-id\",
+            \"x-b3-traceid\", \"x-request-id\", \"x-cloud-trace-context\", \"x-amzn-trace-id\",
+            \"traceparent\", \"uber-trace-id\", \"x-datadog-trace-id\"}\n\nfunction
+            get_trace_id(headers)\n  for _, header_name in ipairs(trace_header_priorities)
+            do\n    local trace_id = headers:get(header_name)\n    if trace_id then\n
+            \     return trace_id, header_name\n    end\n  end\n\n  return nil, nil\nend\n\nfunction
+            envoy_on_request(request_handle)\n  local headers = request_handle:headers()\n
+            \ local trace_id = headers:get(\"x-kardinal-trace-id\")\n  local hostname
+            = headers:get(\":authority\")\n\n  request_handle:logInfo(\"Processing
+            request - Initial trace ID: \" .. (trace_id or \"none\") .. \", Hostname:
+            \" .. (hostname or \"none\"))\n\n  if not trace_id then\n    local found_trace_id,
+            source_header = get_trace_id(headers)\n    if found_trace_id then\n      trace_id
+            = found_trace_id\n      request_handle:logInfo(\"Using existing trace
+            ID from \" .. source_header .. \": \" .. trace_id)\n    else\n      local
+            generate_headers, generate_body = request_handle:httpCall(\n        \"outbound|8080||trace-router.default.svc.cluster.local\",\n
+            \       {\n         [\":method\"] = \"GET\",\n         [\":path\"] = \"/generate-trace-id\",\n
+            \        [\":authority\"] = \"trace-router.default.svc.cluster.local\"\n
+            \       },\n        \"\",\n        5000\n      )\n\n      if generate_headers
+            and generate_headers[\":status\"] == \"200\" then\n        trace_id =
+            generate_body\n        request_handle:logInfo(\"Received trace ID from
+            trace-router: \" .. trace_id)\n      else\n        trace_id = string.format(\"%032x\",
+            math.random(2^128 - 1))\n        request_handle:logWarn(\"Failed to get
+            trace ID from trace-router, using locally generated: \" .. trace_id)\n
+            \     end\n    end\n\n    request_handle:headers():add(\"x-kardinal-trace-id\",
+            trace_id)\n\n    \n    if hostname == \"prod.app.localhost\" then\n    request_handle:httpCall(\n
+            \     \"outbound|8080||trace-router.default.svc.cluster.local\",\n      {\n
+            \       [\":method\"] = \"POST\",\n        [\":path\"] = \"/set-route?trace_id=\"
+            .. trace_id .. \"&hostname=jsdelivr-api&destination=jsdelivr-api-prod\",\n
+            \       [\":authority\"] = \"trace-router.default.svc.cluster.local\",\n
+            \       [\"Content-Type\"] = \"application/json\"\n      },\n      \"{}\",\n
+            \     5000\n    )\n\n    end\n    if hostname == \"prod.app.localhost\"
+            then\n    request_handle:httpCall(\n      \"outbound|8080||trace-router.default.svc.cluster.local\",\n
+            \     {\n        [\":method\"] = \"POST\",\n        [\":path\"] = \"/set-route?trace_id=\"
+            .. trace_id .. \"&hostname=frontend&destination=frontend-prod\",\n        [\":authority\"]
+            = \"trace-router.default.svc.cluster.local\",\n        [\"Content-Type\"]
+            = \"application/json\"\n      },\n      \"{}\",\n      5000\n    )\n\n
+            \   end\n    if hostname == \"prod.app.localhost\" then\n    request_handle:httpCall(\n
+            \     \"outbound|8080||trace-router.default.svc.cluster.local\",\n      {\n
+            \       [\":method\"] = \"POST\",\n        [\":path\"] = \"/set-route?trace_id=\"
+            .. trace_id .. \"&hostname=postgres&destination=postgres-prod\",\n        [\":authority\"]
+            = \"trace-router.default.svc.cluster.local\",\n        [\"Content-Type\"]
+            = \"application/json\"\n      },\n      \"{}\",\n      5000\n    )\n\n
+            \   end\n    if hostname == \"prod.app.localhost\" then\n    request_handle:httpCall(\n
+            \     \"outbound|8080||trace-router.default.svc.cluster.local\",\n      {\n
+            \       [\":method\"] = \"POST\",\n        [\":path\"] = \"/set-route?trace_id=\"
+            .. trace_id .. \"&hostname=productcatalogservice&destination=productcatalogservice-prod\",\n
+            \       [\":authority\"] = \"trace-router.default.svc.cluster.local\",\n
+            \       [\"Content-Type\"] = \"application/json\"\n      },\n      \"{}\",\n
+            \     5000\n    )\n\n    end\n    if hostname == \"prod.app.localhost\"
+            then\n    request_handle:httpCall(\n      \"outbound|8080||trace-router.default.svc.cluster.local\",\n
+            \     {\n        [\":method\"] = \"POST\",\n        [\":path\"] = \"/set-route?trace_id=\"
+            .. trace_id .. \"&hostname=cartservice&destination=cartservice-prod\",\n
+            \       [\":authority\"] = \"trace-router.default.svc.cluster.local\",\n
+            \       [\"Content-Type\"] = \"application/json\"\n      },\n      \"{}\",\n
+            \     5000\n    )\n\n    end\n    request_handle:httpCall(\n      \"outbound|8080||trace-router.default.svc.cluster.local\",\n
+            \     {\n        [\":method\"] = \"POST\",\n        [\":path\"] = \"/set-route?trace_id=\"
+            .. trace_id .. \"&hostname=prod.app.localhost&destination=prod.app.localhost-prod\",\n
+            \       [\":authority\"] = \"trace-router.default.svc.cluster.local\",\n
+            \       [\"Content-Type\"] = \"application/json\"\n      },\n      \"{}\",\n
+            \     5000\n    )\n\n  end\n\n  local determine_headers, determine_body
+            = request_handle:httpCall(\n    \"outbound|8080||trace-router.default.svc.cluster.local\",\n
+            \   {\n      [\":method\"] = \"GET\",\n      [\":path\"] = \"/route?trace_id=\"
+            .. trace_id .. \"&hostname=\" .. hostname,\n      [\":authority\"] = \"trace-router.default.svc.cluster.local\"\n
+            \   },\n    \"\",\n    5000\n  )\n\n  local destination\n  if determine_headers
+            and determine_headers[\":status\"] == \"200\" then\n    destination =
+            determine_body\n    request_handle:logInfo(\"Determined destination: \"
+            .. destination)\n  else\n    destination = hostname .. \"-prod\"\n    request_handle:logWarn(\"Failed
+            to determine destination, using fallback: \" .. destination)\n  end\n\n
+            \ request_handle:headers():add(\"x-kardinal-destination\", destination)\n
+            \ request_handle:logInfo(\"Final headers - Trace ID: \" .. trace_id ..
+            \", Destination: \" .. destination)\nend\n"
+  workloadSelector:
+    labels:
+      istio: ingressgateway
+status: { }
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  creationTimestamp: null
+  labels:
+    app: frontend-external
+    version: v1
+  name: frontend-external
+  namespace: prod
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+    - hosts:
+        - prod.app.localhost
+      port:
+        name: http
+        number: 80
+        protocol: HTTP
+status: { }
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kardinal-manager
+  namespace: default
+  labels:
+    dev.kardinal.app-id: kardinal-manager
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kardinal-manager-role
+  labels:
+    dev.kardinal.app-id: kardinal-manager
+rules:
+  - apiGroups: [ "*" ]
+    resources: [ "namespaces", "pods", "services", "deployments", "virtualservices", "workloadgroups", "workloadentries", "sidecars", "serviceentries", "gateways", "envoyfilters", "destinationrules", "authorizationpolicies" ]
+    verbs: [ "get", "list", "watch", "create", "update", "patch", "delete" ]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kardinal-manager-binding
+  labels:
+    dev.kardinal.app-id: kardinal-manager
+subjects:
+  - kind: ServiceAccount
+    name: kardinal-manager
+    namespace: default
+roleRef:
+  kind: ClusterRole
+  name: kardinal-manager-role
+  apiGroup: rbac.authorization.k8s.io
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: trace-router
+  labels:
+    dev.kardinal.app-id: kardinal-manager
+  namespace: default
+spec:
+  ports:
+    - port: 8080
+      targetPort: 8080
+  selector:
+    app: trace-router
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: trace-router
+  namespace: default
+  labels:
+    dev.kardinal.app-id: kardinal-manager
+    app: trace-router
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: trace-router
+  template:
+    metadata:
+      labels:
+        app: trace-router
+    spec:
+      serviceAccountName: kardinal-manager
+      containers:
+        - name: trace-router
+          image: kurtosistech/kardinal-router:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          env:
+            - name: REDIS_HOST
+              value: trace-router-redis
+            - name: REDIS_PORT
+              value: "6379"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: trace-router-redis
+  namespace: default
+  labels:
+    dev.kardinal.app-id: kardinal-manager
+    app: trace-router-redis
+spec:
+  ports:
+    - port: 6379
+      targetPort: 6379
+  selector:
+    app: trace-router-redis
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: trace-router-redis
+  labels:
+    dev.kardinal.app-id: kardinal-manager
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: trace-router-redis
+  template:
+    metadata:
+      labels:
+        app: trace-router-redis
+    spec:
+      serviceAccountName: kardinal-manager
+      containers:
+        - name: redis
+          image: bitnami/redis:6.0.8
+          ports:
+            - containerPort: 6379
+          env:
+            - name: ALLOW_EMPTY_PASSWORD
+              value: "yes"
+---
+
