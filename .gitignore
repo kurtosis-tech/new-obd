@@ -1,3 +1,4 @@
 .direnv
 branch-name.nix
 .idea
+.DS_Store
