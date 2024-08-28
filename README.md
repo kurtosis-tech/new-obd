@@ -48,13 +48,13 @@ minikube tunnel
 
 ## Development Guide
 
-This doc explains how to build and run the OnlineBoutique source code locally using the `skaffold` command-line tool.
+This doc explains how to build and run the OnlineBoutique source code locally using the `tilt` command-line tool.
 
 ### Prerequisites
 
-- [Docker for Desktop](https://www.docker.com/products/docker-desktop).
+- [Docker for Desktop](https://www.docker.com/products/docker-desktop)
 - kubectl (can be installed via `gcloud components install kubectl`)
-- [skaffold **1.27+**](https://skaffold.dev/docs/install/) (latest version recommended), a tool that builds and deploys Docker images in bulk.
+- [tilt **0.22.2+**](https://docs.tilt.dev/install.html) (latest version recommended)
 - [Minikube](https://minikube.sigs.k8s.io/docs/start/) (optional - see Local Cluster)
 
 ### Local Cluster
@@ -78,22 +78,14 @@ This doc explains how to build and run the OnlineBoutique source code locally us
 
 2. Run `kubectl get nodes` to verify you're connected to the respective control plane.
 
-3. Run `skaffold run` (first time will be slow, it can take ~20 minutes).
-   This will build and deploy the application. If you need to rebuild the images
-   automatically as you refactor the code, run `skaffold dev` command.
-
-4. Run `kubectl get pods` to verify the Pods are ready and running.
-
-5. Access the web frontend through your browser
-    - **Minikube** requires you to run a command to access the frontend service:
-
-    ```shell
-    minikube service frontend-external
-    ```
-
-    - **Docker For Desktop** should automatically provide the frontend at http://localhost:80
+3. Two options:
+   1. Run `sudo tilt up`.
+         To deploy the app using the `./release/obd-kardinal.yaml` file, with Kardinal annotations, in the cluster. Take into account that it will use the container images defined in the YAML, it will try to pull them from the cloud. The sudo privileges are necessary in order to port-forward the port "80"
+   2. Run `sudo tilt up -- --build frontend --build productcatalogservice`.
+         To deploy the app using the `./release/obd-kardinal.yaml` file and also create a new 'dev' flow with dev images version for the services specified with the `build` flag (valid values: 'frontend', 'cartservice', 'productcatalogservice', convine these as you want).
+         Edit the source code and check the changes in the dev URL, `Tilt` will trigger the hot-reload for it
 
 ## Cleanup
 
-If you've deployed the application with `skaffold run` command, you can run
-`skaffold delete` to clean up the deployed resources.
+If you've deployed the application with `tilt up` command, you can run
+`tilt down --delete-namespaces` to clean up the deployed resources, the `--delete-namespaces` flas is important because otherwise it won't delete the namespace.
