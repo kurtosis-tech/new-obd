@@ -25,40 +25,46 @@
 <main role="main">
   <div class="h-product container">
     <div class="row">
+    {{if $.is_product}}
       <div class="col-md-6">
-        <img class="product-image" alt="" src="{{$.product.Item.Picture}}" />
-      </div>
-      <div class="product-info col-md-5">
-        <div class="product-wrapper">
-
-          <h2>{{ $.product.Item.Name }}</h2>
-          <p class="product-price">{{ renderMoney $.product.Price }}</p>
-          <p>{{ $.product.Item.Description }}</p>
-
-          <form method="POST" action="/cart">
-            <input type="hidden" name="product_id" value="{{$.product.Item.Id}}" />
-            <div class="product-quantity-dropdown">
-              <select name="quantity" id="quantity">
-                <option>1</option>
-                <option>2</option>
-                <option>3</option>
-                <option>4</option>
-                <option>5</option>
-                <option>10</option>
-              </select>
-              <img src="/static/icons/Hipster_DownArrow.svg" alt="">
-            </div>
-            {{if $.is_present_feature}}
-              <div class="product-present-checkbox">
-                <img src="/static/images/present.png" alt="present icon">
-                <label for="present">Is a present?:</label>
-                <input type="checkbox" id="present" name="present">
-              </div>
-            {{end}}
-            <button type="submit" class="cymbal-button-primary">Add To Cart</button>
-          </form>
+          <img class="product-image" alt="" src="{{$.product.Item.Picture}}" />
         </div>
+      <div class="product-info col-md-5">
+          <div class="product-wrapper">
+
+            <h2>{{ $.product.Item.Name }}</h2>
+            <p class="product-price">{{ renderMoney $.product.Price }}</p>
+            <p>{{ $.product.Item.Description }}</p>
+
+            <form method="POST" action="/cart">
+              <input type="hidden" name="product_id" value="{{$.product.Item.Id}}" />
+              <div class="product-quantity-dropdown">
+                <select name="quantity" id="quantity">
+                  <option>1</option>
+                  <option>2</option>
+                  <option>3</option>
+                  <option>4</option>
+                  <option>5</option>
+                  <option>10</option>
+                </select>
+                <img src="/static/icons/Hipster_DownArrow.svg" alt="">
+              </div>
+              {{if $.is_present_feature}}
+                <div class="product-present-checkbox">
+                  <img src="/static/images/present.png" alt="present icon">
+                  <label for="present">Is a present?:</label>
+                  <input type="checkbox" id="present" name="present">
+                </div>
+              {{end}}
+              <button type="submit" class="cymbal-button-primary">Add To Cart</button>
+            </form>
+          </div>
+        </div>
+    {{else}}
+      <div class="col-md-12">
+        <p >No product found for id {{$.id}}</p>
       </div>
+    {{end}}
     </div>
   </div>
   <div>
