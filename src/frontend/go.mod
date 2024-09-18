@@ -7,8 +7,8 @@ toolchain go1.22.4
 replace (
 	github.com/kurtosis-tech/new-obd/src/cartservice => ../cartservice
 	github.com/kurtosis-tech/new-obd/src/currencyexternalapi => ../currencyexternalapi
+	github.com/kurtosis-tech/new-obd/src/events => ../events
 	github.com/kurtosis-tech/new-obd/src/productcatalogservice => ../productcatalogservice
-
 )
 
 require (
@@ -16,6 +16,7 @@ require (
 	github.com/gorilla/mux v1.8.1
 	github.com/kurtosis-tech/new-obd/src/cartservice v0.0.0
 	github.com/kurtosis-tech/new-obd/src/currencyexternalapi v0.0.0
+	github.com/kurtosis-tech/new-obd/src/events v0.0.0-00010101000000-000000000000
 	github.com/kurtosis-tech/new-obd/src/productcatalogservice v0.0.0
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.8.1
@@ -23,8 +24,10 @@ require (
 
 require (
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
+	github.com/aws/aws-sdk-go v1.55.5 // indirect
 	github.com/golang/protobuf v1.5.0 // indirect
 	github.com/google/go-cmp v0.5.8 // indirect
+	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/oapi-codegen/runtime v1.1.1 // indirect
 	golang.org/x/sys v0.20.0 // indirect
 	google.golang.org/genproto v0.0.0-20200526211855-cb27e3aa2013 // indirect

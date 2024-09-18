@@ -54,6 +54,10 @@ const (
 )
 
 func (fe *frontendServer) homeHandler(w http.ResponseWriter, r *http.Request) {
+
+	eventMsg := fmt.Sprintf("User: %s Visiting the Home page", userID)
+	fe.eventsManager.PublishMessage(eventMsg)
+
 	currencies, err := fe.currencyService.GetSupportedCurrencies(r.Context())
 	if err != nil {
 		renderHTTPError(r, w, errors.Wrapf(err, "error retrieving currencies"), http.StatusInternalServerError)

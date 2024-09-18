@@ -1,10 +1,13 @@
 module github.com/kurtosis-tech/new-obd/src/productcatalogservice
 
-go 1.21
+go 1.21.9
+
+replace github.com/kurtosis-tech/new-obd/src/events => ../events
 
 require (
 	github.com/deepmap/oapi-codegen/v2 v2.2.1-0.20240604070534-2f0ff757704b
 	github.com/getkin/kin-openapi v0.124.0
+	github.com/kurtosis-tech/new-obd/src/events v0.0.0-00010101000000-000000000000
 	github.com/labstack/echo/v4 v4.12.0
 	github.com/oapi-codegen/runtime v1.1.1
 	github.com/sirupsen/logrus v1.8.1
@@ -12,11 +15,13 @@ require (
 
 require (
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
+	github.com/aws/aws-sdk-go v1.55.5 // indirect
 	github.com/go-openapi/jsonpointer v0.20.2 // indirect
 	github.com/go-openapi/swag v0.22.8 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/google/uuid v1.5.0 // indirect
 	github.com/invopop/yaml v0.2.0 // indirect
+	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/labstack/gommon v0.4.2 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect

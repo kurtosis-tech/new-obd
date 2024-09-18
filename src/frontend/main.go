@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/kurtosis-tech/new-obd/src/events"
 	"net/http"
 	"os"
 	"time"
@@ -40,6 +41,7 @@ type frontendServer struct {
 	cartService           *cartservice_rest_client.ClientWithResponses
 	productCatalogService *productcatalogservice_rest_client.ClientWithResponses
 	currencyService       *currencyexternalservice.CurrencyExternalService
+	eventsManager         *events.EventsManager
 }
 
 func main() {
@@ -73,10 +75,16 @@ func main() {
 
 	apiKey := os.Getenv("JSDELIVRAPIKEY")
 
+	snsTopicARN := os.Getenv("SNS_TOPIC_ARN")
+	queueUrl := os.Getenv("QUEUE_URL")
+
+	eventsManager := events.NewPageVisitsEventsManager(snsTopicARN, queueUrl)
+
 	svc := &frontendServer{
 		cartService:           cartServiceClient,
 		productCatalogService: productCatalogServiceClient,
 		currencyService:       currencyexternalservice.CreateService(apiKey),
+		eventsManager:         eventsManager,
 	}
 
 	r := mux.NewRouter()
