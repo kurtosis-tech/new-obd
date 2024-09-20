@@ -1,35 +1,54 @@
-package jsdelivr
+package freecurrency
 
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/kurtosis-tech/new-obd/src/currencyexternalapi/config"
+	"github.com/kurtosis-tech/new-obd/src/libraries/currencyexternalapi/config"
 	"net/url"
 	"strings"
 	"time"
 )
 
 const (
-	apiBaseURL              = "https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/"
+	apiBaseURL              = "https://api.freecurrencyapi.com/v1/"
 	apiKeyQueryParamKey     = "apikey"
-	currenciesEndpointPath  = "currencies.json"
-	latestRatesEndpointPath = "currencies/usd.json"
+	currenciesQueryParamKey = "currencies"
+	currenciesEndpointPath  = "currencies"
+	latestRatesEndpointPath = "latest"
 )
 
-type LatestRatesResponse struct {
-	Date string             `json:"date"`
-	Usd  map[string]float64 `json:"usd"`
+type CurrenciesResponse struct {
+	Data map[string]Currency `json:"data"`
 }
 
-func GetJsdelivrAPIConfig(apiKey string) *config.CurrencyAPIConfig {
-	var JsdelivrAPIConfig = config.NewCurrencyAPIConfig(
-		5*time.Second,
+type Currency struct {
+	Symbol        string `json:"symbol"`
+	Name          string `json:"name"`
+	SymbolNative  string `json:"symbol_native"`
+	DecimalDigits int    `json:"decimal_digits"`
+	Rounding      int    `json:"rounding"`
+	Code          string `json:"code"`
+	NamePlural    string `json:"name_plural"`
+	Type          string `json:"type"`
+}
+
+type LatestRatesResponse struct {
+	Data LatestRates `json:"data"`
+}
+
+type LatestRates map[string]float64
+
+func GetFreeCurrencyAPIConfig(apiKey string) *config.CurrencyAPIConfig {
+	var FreeCurrencyAPIConfig = config.NewCurrencyAPIConfig(
+		// saving the response for a week because app.freecurrencyapi.com has a low limit
+		// and this is a demo project, it's not important to have the latest data
+		168*time.Hour,
 		getGetCurrenciesURLFunc(apiKey),
 		getGetLatestRatesURLFunc(apiKey),
 		getCurrencyListFromResponseFunc,
 		getLatestRatesFromResponse,
 	)
-	return JsdelivrAPIConfig
+	return FreeCurrencyAPIConfig
 }
 
 func getGetCurrenciesURLFunc(apiKey string) func() (*url.URL, error) {
@@ -66,7 +85,10 @@ func getGetLatestRatesURLFunc(apiKey string) func(string, string) (*url.URL, err
 
 		latestRatesEndpointQuery := latestRatesEndpointUrl.Query()
 
+		currenciesQueryParamValue := strings.Join([]string{strings.ToUpper(from), strings.ToUpper(to)}, ",")
+
 		latestRatesEndpointQuery.Set(apiKeyQueryParamKey, apiKey)
+		latestRatesEndpointQuery.Set(currenciesQueryParamKey, currenciesQueryParamValue)
 
 		latestRatesEndpointUrl.RawQuery = latestRatesEndpointQuery.Encode()
 
@@ -78,14 +100,13 @@ func getGetLatestRatesURLFunc(apiKey string) func(string, string) (*url.URL, err
 
 func getCurrencyListFromResponseFunc(httpResponseBodyBytes []byte) ([]string, error) {
 	currencyCodes := []string{}
-	currenciesResp := &map[string]string{}
+	currenciesResp := &CurrenciesResponse{}
 	if err := json.Unmarshal(httpResponseBodyBytes, currenciesResp); err != nil {
 		return currencyCodes, err
 	}
 
-	for code := range *currenciesResp {
-		upperCode := strings.ToUpper(code)
-		currencyCodes = append(currencyCodes, upperCode)
+	for code := range currenciesResp.Data {
+		currencyCodes = append(currencyCodes, code)
 	}
 	return currencyCodes, nil
 }
@@ -97,14 +118,6 @@ func getLatestRatesFromResponse(httpResponseBodyBytes []byte) (map[string]float6
 	if err := json.Unmarshal(httpResponseBodyBytes, latestRatesResp); err != nil {
 		return data, err
 	}
-	data = latestRatesResp.Usd
-	dataUpperCode := map[string]float64{}
-	for code, rate := range data {
-		upperCode := strings.ToUpper(code)
-		dataUpperCode[upperCode] = rate
-	}
-
-	//add USD
-	dataUpperCode["USD"] = 1
-	return dataUpperCode, nil
+	data = latestRatesResp.Data
+	return data, nil
 }

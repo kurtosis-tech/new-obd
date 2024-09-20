@@ -17,6 +17,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/kurtosis-tech/new-obd/src/libraries/tracing"
 	"html/template"
 	"log"
 	"net/http"
@@ -27,7 +28,6 @@ import (
 
 	"github.com/gorilla/mux"
 	cartservice_rest_types "github.com/kurtosis-tech/new-obd/src/cartservice/api/http_rest/types"
-	"github.com/kurtosis-tech/new-obd/src/frontend/consts"
 	"github.com/kurtosis-tech/new-obd/src/frontend/money"
 	productcatalogservice_rest_types "github.com/kurtosis-tech/new-obd/src/productcatalogservice/api/http_rest/types"
 	"github.com/pkg/errors"
@@ -49,14 +49,7 @@ var (
 	plat platformDetails
 )
 
-const (
-	userID = "0494c5e0-dde0-48fa-a6d8-f7962f5476bf"
-)
-
 func (fe *frontendServer) homeHandler(w http.ResponseWriter, r *http.Request) {
-
-	eventMsg := fmt.Sprintf("User: %s Visiting the Home page", userID)
-	fe.eventsManager.PublishMessage(eventMsg)
 
 	currencies, err := fe.currencyService.GetSupportedCurrencies(r.Context())
 	if err != nil {
@@ -103,15 +96,14 @@ func (fe *frontendServer) homeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := templates.ExecuteTemplate(w, "home", map[string]interface{}{
-		"session_id":    sessionID(r),
-		"request_id":    r.Context().Value(ctxKeyRequestID{}),
-		"user_currency": currentCurrency(r),
-		"show_currency": true,
-		"currencies":    currencies,
-		"products":      ps,
-		"cart_size":     cartSize(*cart.Items),
-		"banner_color":  os.Getenv("BANNER_COLOR"), // illustrates canary deployments
-		//"ad":                fe.chooseAd(r.Context(), []string{}, log), //TODO fix
+		"session_id":      sessionID(r),
+		"request_id":      r.Context().Value(ctxKeyRequestID{}),
+		"user_currency":   currentCurrency(r),
+		"show_currency":   true,
+		"currencies":      currencies,
+		"products":        ps,
+		"cart_size":       cartSize(*cart.Items),
+		"banner_color":    os.Getenv("BANNER_COLOR"), // illustrates canary deployments
 		"platform_css":    plat.css,
 		"platform_name":   plat.provider,
 		"is_cymbal_brand": isCymbalBrand,
@@ -436,10 +428,10 @@ func cartSize(c []cartservice_rest_types.CartItem) int {
 }
 
 func getSetTraceIdHeaderRequestEditorFcn(upsTreamRequest *http.Request) func(ctx context.Context, req *http.Request) error {
-	traceID := upsTreamRequest.Header.Get(consts.KardinalTraceIdHeaderKey)
+	traceID := upsTreamRequest.Header.Get(tracing.KardinalTraceIdHeaderKey)
 
 	setKardinalReqEditorFcn := func(ctx context.Context, req *http.Request) error {
-		req.Header.Set(consts.KardinalTraceIdHeaderKey, traceID)
+		req.Header.Set(tracing.KardinalTraceIdHeaderKey, traceID)
 		return nil
 	}
 

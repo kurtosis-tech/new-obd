@@ -8,6 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sns"
 	"github.com/aws/aws-sdk-go/service/sqs"
+	"os"
 	"time"
 )
 
@@ -16,8 +17,31 @@ type EventsManager struct {
 	queueUrl    string
 }
 
-func NewPageVisitsEventsManager(snsTopicARN string, queueUrl string) *EventsManager {
+func newEventsManager(snsTopicARN string, queueUrl string) *EventsManager {
 	return &EventsManager{snsTopicARN: snsTopicARN, queueUrl: queueUrl}
+}
+
+func CreateEventsManager() (*EventsManager, error) {
+
+	//awsKey := os.Getenv("AWS_ACCESS_KEY_ID")
+	//awsSecret := os.Getenv("AWS_SECRET_ACCESS_KEY")
+	awsRegion := os.Getenv("AWS_REGION")
+
+	if awsRegion == "" {
+		//return nil, errors.New("imposible to init the events manager component because the AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY or AWS_REGION environment variable not set")
+		return nil, errors.New("imposible to init the events manager component because AWS_REGION environment variable not set")
+	}
+
+	snsTopicARN := os.Getenv("SNS_TOPIC_ARN")
+	queueUrl := os.Getenv("QUEUE_URL")
+
+	if snsTopicARN == "" || queueUrl == "" {
+		return nil, errors.New("imposible to init the events manager component because the SNS_TOPIC_ARN or QUEUE_URL environment variable not set")
+	}
+
+	manager := newEventsManager(snsTopicARN, queueUrl)
+
+	return manager, nil
 }
 
 func (manager *EventsManager) PublishMessage(message string) error {

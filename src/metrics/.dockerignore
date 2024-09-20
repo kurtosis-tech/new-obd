@@ -1,3 +1,4 @@
 .gitignore
+../Dockerfile
 default.nix
 gomod2nix.toml

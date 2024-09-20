@@ -3,7 +3,7 @@ package ghgist
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/kurtosis-tech/new-obd/src/currencyexternalapi/config"
+	"github.com/kurtosis-tech/new-obd/src/libraries/currencyexternalapi/config"
 	"net/url"
 	"time"
 )

@@ -1,4 +1,4 @@
-module github.com/kurtosis-tech/new-obd/src/events
+module github.com/kurtosis-tech/new-obd/src/libraries/events
 
 go 1.19
 

@@ -1,0 +1,36 @@
+{{ define "home" }}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Metrics Viewer</title>
+    <link rel="stylesheet" type="text/css" href="/static/styles/styles.css">
+    <link rel='shortcut icon' type='image/x-icon' href='/static/favicon.ico' />
+</head>
+<body>
+<header>
+    <h1>Metrics Dashboard</h1>
+</header>
+<div class="container">
+    <h2>Page Visits</h2>
+    <div id="messages"></div>
+</div>
+<div class="footer">
+    <p>&copy; 2024 Online Boutique demo</p>
+</div>
+<script>
+    var conn = new WebSocket("ws://localhost:8091/ws");
+    conn.onmessage = function(event) {
+        var msg = JSON.parse(event.data);
+        var messagesDiv = document.getElementById("messages");
+        var newMessage = document.createElement("div");
+        newMessage.classList.add("message");
+        newMessage.innerText = "" + msg.Message;
+        messagesDiv.appendChild(newMessage);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight; // Scroll to the bottom
+    };
+</script>
+</body>
+</html>
+{{ end }}

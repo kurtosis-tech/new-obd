@@ -6,8 +6,9 @@ toolchain go1.22.4
 
 replace (
 	github.com/kurtosis-tech/new-obd/src/cartservice => ../cartservice
-	github.com/kurtosis-tech/new-obd/src/currencyexternalapi => ../currencyexternalapi
-	github.com/kurtosis-tech/new-obd/src/events => ../events
+	github.com/kurtosis-tech/new-obd/src/libraries/currencyexternalapi => ./../libraries/currencyexternalapi
+	github.com/kurtosis-tech/new-obd/src/libraries/events => ./../libraries/events
+	github.com/kurtosis-tech/new-obd/src/libraries/tracing => ./../libraries/tracing
 	github.com/kurtosis-tech/new-obd/src/productcatalogservice => ../productcatalogservice
 )
 
@@ -15,11 +16,13 @@ require (
 	github.com/google/uuid v1.5.0
 	github.com/gorilla/mux v1.8.1
 	github.com/kurtosis-tech/new-obd/src/cartservice v0.0.0
-	github.com/kurtosis-tech/new-obd/src/currencyexternalapi v0.0.0
-	github.com/kurtosis-tech/new-obd/src/events v0.0.0-00010101000000-000000000000
+	github.com/kurtosis-tech/new-obd/src/currencyexternalapi v0.0.0-20240905173058-8d378bef698b
+	github.com/kurtosis-tech/new-obd/src/libraries/currencyexternalapi v0.0.0
+	github.com/kurtosis-tech/new-obd/src/libraries/events v0.0.0
+	github.com/kurtosis-tech/new-obd/src/libraries/tracing v0.0.0
 	github.com/kurtosis-tech/new-obd/src/productcatalogservice v0.0.0
 	github.com/pkg/errors v0.9.1
-	github.com/sirupsen/logrus v1.8.1
+	github.com/sirupsen/logrus v1.9.3
 )
 
 require (

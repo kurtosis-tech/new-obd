@@ -2,7 +2,8 @@ package main
 
 import (
 	"fmt"
-	"github.com/kurtosis-tech/new-obd/src/events"
+	"github.com/kurtosis-tech/new-obd/src/libraries/events"
+	"github.com/kurtosis-tech/new-obd/src/libraries/tracing"
 	"net/http"
 	"os"
 	"time"
@@ -24,16 +25,9 @@ const (
 	cookiePrefix    = "shop_"
 	cookieSessionID = cookiePrefix + "session-id"
 	cookieCurrency  = cookiePrefix + "currency"
-)
 
-var whitelistedCurrencies = map[string]bool{
-	"USD": true,
-	"EUR": true,
-	"CAD": true,
-	"JPY": true,
-	"GBP": true,
-	"TRY": true,
-}
+	userID = "0494c5e0-dde0-48fa-a6d8-f7962f5476bf"
+)
 
 type ctxKeySessionID struct{}
 
@@ -41,7 +35,6 @@ type frontendServer struct {
 	cartService           *cartservice_rest_client.ClientWithResponses
 	productCatalogService *productcatalogservice_rest_client.ClientWithResponses
 	currencyService       *currencyexternalservice.CurrencyExternalService
-	eventsManager         *events.EventsManager
 }
 
 func main() {
@@ -75,16 +68,10 @@ func main() {
 
 	apiKey := os.Getenv("JSDELIVRAPIKEY")
 
-	snsTopicARN := os.Getenv("SNS_TOPIC_ARN")
-	queueUrl := os.Getenv("QUEUE_URL")
-
-	eventsManager := events.NewPageVisitsEventsManager(snsTopicARN, queueUrl)
-
 	svc := &frontendServer{
 		cartService:           cartServiceClient,
 		productCatalogService: productCatalogServiceClient,
 		currencyService:       currencyexternalservice.CreateService(apiKey),
-		eventsManager:         eventsManager,
 	}
 
 	r := mux.NewRouter()
@@ -98,18 +85,17 @@ func main() {
 	r.HandleFunc("/robots.txt", func(w http.ResponseWriter, _ *http.Request) { fmt.Fprint(w, "User-agent: *\nDisallow: /") })
 	r.HandleFunc("/_healthz", func(w http.ResponseWriter, _ *http.Request) { fmt.Fprint(w, "ok") })
 
-	//TODO
-	/*
-		r.HandleFunc("/logout", svc.logoutHandler).Methods(http.MethodGet)
-		r.HandleFunc("/cart/checkout", svc.placeOrderHandler).Methods(http.MethodPost)
-	*/
-
 	var handler http.Handler = r
 	handler = &logHandler{log: log, next: handler} // add logging
 	handler = ensureSessionID(handler)             // add session ID
-	// handler = tracing(handler)                     // add opentelemetry instrumentation
-	// r.Use(otelmux.Middleware(name))
-	r.Use(KardinalTracingContextWrapper)
+	r.Use(tracing.KardinalTracingContextWrapper)
+
+	// add the events manage middleware
+	eventsManager, err := events.CreateEventsManager()
+	if err != nil {
+		logrus.Errorf("An error occurred initializing events manager! No site events will be tracked due this error.\nError was: %s", err)
+	}
+	r.Use(events.GetWrapsWithEventsManagerMiddleware(eventsManager))
 
 	// Start the server
 	http.Handle("/", r)
