@@ -2,10 +2,12 @@
 FRONTEND_SERVICE_NAME='frontend'
 CARTSERVICE_SERVICE_NAME='cartservice'
 PRODUCTCATALOG_SERVICE_NAME='productcatalogservice'
+METRICS_SERVICE_NAME='metrics'
 DEV_IMAGE_SUFFIX='-dev-image'
 FRONTEND_REF=FRONTEND_SERVICE_NAME + DEV_IMAGE_SUFFIX
 CARTSERVICE_REF=CARTSERVICE_SERVICE_NAME + DEV_IMAGE_SUFFIX
 PRODUCTCATALOG_REF=PRODUCTCATALOG_SERVICE_NAME + DEV_IMAGE_SUFFIX
+METRICS_REF=METRICS_SERVICE_NAME + DEV_IMAGE_SUFFIX
 
 # enforces a minimum Tilt version
 version_settings(constraint='>=0.22.2')
@@ -26,7 +28,7 @@ if 'build' in arguments:
 build_arg_len = len(build_arg)
 
 # validate the 'build' argument
-valid_build_arguments = [FRONTEND_SERVICE_NAME, CARTSERVICE_SERVICE_NAME, PRODUCTCATALOG_SERVICE_NAME]
+valid_build_arguments = [FRONTEND_SERVICE_NAME, CARTSERVICE_SERVICE_NAME, PRODUCTCATALOG_SERVICE_NAME, METRICS_SERVICE_NAME]
 for bu_arg in build_arg:
     if bu_arg not in valid_build_arguments:
         fail('build argument {} is not valid. Valid arguments are: {}'.format(bu_arg, valid_build_arguments))
@@ -40,7 +42,7 @@ if k8s_context() == 'minikube':
     local('eval $(minikube docker-env)')
 
 # set the env var to use the local Kontrol
-local('export KARDINAL_CLI_DEV_MODE=TRUE')
+os.environ["KARDINAL_CLI_DEV_MODE"] = "TRUE"
 
 # clean current flows before creating new ones, it's just for the tilt up cmd
 if config.tilt_subcommand == 'up':
@@ -70,16 +72,16 @@ if config.tilt_subcommand == 'up':
 if 'cartservice' in build_arg:
     docker_build(
         CARTSERVICE_REF,
-        context='./src/cartservice',
-        dockerfile='./src/cartservice/Dockerfile',
+        context='./src',
+        dockerfile='./src/cartservice.dockerfile',
     )
 
 # PRODUCT CATALOG SERVICE
 if 'productcatalogservice' in build_arg:
     docker_build(
         PRODUCTCATALOG_REF,
-        context='./src/productcatalogservice',
-        dockerfile='./src/productcatalogservice/Dockerfile',
+        context='./src',
+        dockerfile='./src/productcatalogservice.dockerfile',
     )
 
 # FRONTEND
@@ -88,6 +90,14 @@ if 'frontend' in build_arg:
         FRONTEND_REF,
         context='./src',
         dockerfile='./src/frontend.dockerfile',
+    )
+
+# METRICS
+if 'metrics' in build_arg:
+    docker_build(
+        METRICS_REF,
+        context='./src',
+        dockerfile='./src/metrics.dockerfile',
     )
 
 kardinal_topology_yaml = local(['kardinal', 'topology', 'print-manifest', '--add-trace-router'], quiet=True)

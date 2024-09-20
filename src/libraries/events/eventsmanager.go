@@ -23,13 +23,12 @@ func newEventsManager(snsTopicARN string, queueUrl string) *EventsManager {
 
 func CreateEventsManager() (*EventsManager, error) {
 
-	//awsKey := os.Getenv("AWS_ACCESS_KEY_ID")
-	//awsSecret := os.Getenv("AWS_SECRET_ACCESS_KEY")
+	awsKey := os.Getenv("AWS_ACCESS_KEY_ID")
+	awsSecret := os.Getenv("AWS_SECRET_ACCESS_KEY")
 	awsRegion := os.Getenv("AWS_REGION")
 
-	if awsRegion == "" {
-		//return nil, errors.New("imposible to init the events manager component because the AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY or AWS_REGION environment variable not set")
-		return nil, errors.New("imposible to init the events manager component because AWS_REGION environment variable not set")
+	if awsRegion == "" || awsKey == "" || awsSecret == "" {
+		return nil, errors.New("imposible to init the events manager component because the AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY or AWS_REGION environment variable not set")
 	}
 
 	snsTopicARN := os.Getenv("SNS_TOPIC_ARN")

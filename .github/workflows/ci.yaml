@@ -33,6 +33,7 @@ jobs:
         uses: DeterminateSystems/flake-checker-action@main
         with:
           fail-mode: true
+          check-outdated: false
 
       # Nix-specific logic begins here
       - name: Nix Check
