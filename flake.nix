@@ -40,8 +40,8 @@
 
         service_names = [
           "cartservice"
-          "currencyexternalapi"
           "frontend"
+          "metrics"
           "productcatalogservice"
         ];
         architectures = ["amd64" "arm64"];
