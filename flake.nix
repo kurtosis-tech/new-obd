@@ -166,6 +166,10 @@
             inherit pkgs;
           };
 
+          packages.metrics = pkgs.callPackage ./src/metrics {
+            inherit pkgs;
+          };
+
           packages.frontend = pkgs.callPackage ./src/frontend {
             inherit pkgs;
           };
