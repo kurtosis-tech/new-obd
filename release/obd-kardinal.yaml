@@ -362,7 +362,6 @@ metadata:
     kubernetes.io/ingress.class: nginx
     kardinal.dev.service/ingress: "true"
   name: ingress
-  namespace: prod
 spec:
   rules:
     - host: web.other.localhost
