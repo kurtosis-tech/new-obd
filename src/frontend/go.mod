@@ -16,7 +16,6 @@ require (
 	github.com/google/uuid v1.5.0
 	github.com/gorilla/mux v1.8.1
 	github.com/kurtosis-tech/new-obd/src/cartservice v0.0.0
-	github.com/kurtosis-tech/new-obd/src/currencyexternalapi v0.0.0-20240905173058-8d378bef698b
 	github.com/kurtosis-tech/new-obd/src/libraries/currencyexternalapi v0.0.0
 	github.com/kurtosis-tech/new-obd/src/libraries/events v0.0.0
 	github.com/kurtosis-tech/new-obd/src/libraries/tracing v0.0.0

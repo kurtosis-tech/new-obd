@@ -4,9 +4,7 @@ go 1.21.9
 
 toolchain go1.22.4
 
-replace (
-	github.com/kurtosis-tech/new-obd/src/libraries/events => ./../libraries/events
-)
+replace github.com/kurtosis-tech/new-obd/src/libraries/events => ./../libraries/events
 
 require (
 	github.com/gorilla/mux v1.8.1
