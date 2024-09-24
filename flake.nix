@@ -166,10 +166,6 @@
             inherit pkgs;
           };
 
-          packages.currencyexternalapi = pkgs.callPackage ./src/currencyexternalapi {
-            inherit pkgs;
-          };
-
           packages.frontend = pkgs.callPackage ./src/frontend {
             inherit pkgs;
           };
