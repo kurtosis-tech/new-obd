@@ -48,6 +48,10 @@ spec:
             timeoutSeconds: 5
             failureThreshold: 3
           env:
+            # if POSTGRES is set, uses this to connect
+            # otherwise uses environment variables below
+            - name: POSTGRES
+              value: ""
             - name: PORT
               value: "8090"
             - name: DB_USERNAME
@@ -127,8 +131,8 @@ spec:
           env:
             - name: ADDRESS
               value: ":8080"
-            - name: FREECURRENCYAPIKEY
-              value: "fca_live_nFVVF8CvfxqJhzMHB4N2x1NH7ffVVPwZr9hg3iNl"
+            - name: JSDELIVRAPIKEY
+              value: "prod"
             - name: CARTSERVICEHOST
               value: cartservice
             - name: PRODUCTCATALOGSERVICEHOST
@@ -144,9 +148,9 @@ metadata:
   annotations:
     kardinal.dev.service/dependencies: "productcatalogservice:http,cartservice:http"
     kardinal.dev.service/plugins: |
-      - name: github.com/kurtosis-tech/free-currency-api-plugin
+      - name: github.com/kurtosis-tech/jsdelivr-api-plugin
         type: external
-        servicename: free-currency-api
+        servicename: jsdelivr-api
         args:
           api_key: ""
 spec:

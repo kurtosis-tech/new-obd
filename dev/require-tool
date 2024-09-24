@@ -1,0 +1,15 @@
+# block Tiltfile execution if missing required tool (e.g. Helm)
+def require_tool(tool, msg=None):
+    tool = shlex.quote(tool)
+    if not msg:
+        msg = '%s is required but was not found in PATH' % tool
+    local(
+        command='command -v %s >/dev/null 2>&1 || { echo >&2 "%s"; exit 1; }' % (tool, msg),
+        command_bat=[
+            "powershell.exe",
+            "-Noninteractive",
+            "-Command",
+            '& {{if (!(Get-Command %s -ErrorAction SilentlyContinue)) {{ Write-Error "%s"; exit 1 }}}}' % (tool, msg),
+        ],
+        quiet=True,
+    )

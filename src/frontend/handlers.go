@@ -82,7 +82,10 @@ func (fe *frontendServer) homeHandler(w http.ResponseWriter, r *http.Request) {
 		Price *productcatalogservice_rest_types.Money
 	}
 
-	products := *productsList
+	products := []productcatalogservice_rest_types.Product{}
+	if productsList != nil {
+		products = *productsList
+	}
 
 	ps := make([]productView, len(products))
 	for i, p := range products {
@@ -128,7 +131,7 @@ func (fe *frontendServer) productHandler(w http.ResponseWriter, r *http.Request)
 		renderHTTPError(r, w, errors.Wrapf(err, "could not retrieve product #%s", id), http.StatusInternalServerError)
 		return
 	}
-	p := productResponse.JSON200
+	productFromCatalog := productResponse.JSON200
 
 	currencies, err := fe.currencyService.GetSupportedCurrencies(r.Context())
 	if err != nil {
@@ -144,32 +147,40 @@ func (fe *frontendServer) productHandler(w http.ResponseWriter, r *http.Request)
 
 	cart := cartResponse.JSON200
 
-	price, err := fe.currencyService.Convert(r.Context(), *p.PriceUsd.CurrencyCode, *p.PriceUsd.Units, *p.PriceUsd.Nanos, currentCurrency(r))
+	price, err := fe.currencyService.Convert(r.Context(), *productFromCatalog.PriceUsd.CurrencyCode, *productFromCatalog.PriceUsd.Units, *productFromCatalog.PriceUsd.Nanos, currentCurrency(r))
 	if err != nil {
-		renderHTTPError(r, w, errors.Wrapf(err, "could not convert currency for product #%s", *p.Id), http.StatusInternalServerError)
+		renderHTTPError(r, w, errors.Wrapf(err, "could not convert currency for product #%s", *productFromCatalog.Id), http.StatusInternalServerError)
 		return
 	}
 
-	product := struct {
+	var productInView struct {
 		Item  productcatalogservice_rest_types.Product
 		Price *productcatalogservice_rest_types.Money
-	}{*p, price}
+	}
+	var isProduct bool
+
+	if productFromCatalog != nil {
+		productInView = struct {
+			Item  productcatalogservice_rest_types.Product
+			Price *productcatalogservice_rest_types.Money
+		}{*productFromCatalog, price}
+		isProduct = true
+	}
 
 	if err := templates.ExecuteTemplate(w, "product", map[string]interface{}{
-		"session_id": sessionID(r),
-		"request_id": r.Context().Value(ctxKeyRequestID{}),
-		//"ad":                fe.chooseAd(r.Context(), p.Categories, log),
-		"user_currency": currentCurrency(r),
-		"show_currency": true,
-		"currencies":    currencies,
-		"product":       product,
-		//"recommendations":   recommendations,
+		"session_id":         sessionID(r),
+		"request_id":         r.Context().Value(ctxKeyRequestID{}),
+		"user_currency":      currentCurrency(r),
+		"show_currency":      true,
+		"currencies":         currencies,
+		"product":            productInView,
 		"cart_size":          cartSize(*cart.Items),
 		"platform_css":       plat.css,
 		"platform_name":      plat.provider,
 		"is_cymbal_brand":    isCymbalBrand,
 		"is_present_feature": false,
-		//"deploymentDetails": deploymentDetailsMap,
+		"is_product":         isProduct,
+		"id":                 id,
 	}); err != nil {
 		log.Println(err)
 	}

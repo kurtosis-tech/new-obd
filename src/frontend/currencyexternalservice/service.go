@@ -7,12 +7,11 @@ import (
 )
 
 type CurrencyExternalService struct {
-	primaryApi   *currencyexternalapi.CurrencyAPI
-	secondaryApi *currencyexternalapi.CurrencyAPI
+	primaryApi *currencyexternalapi.CurrencyAPI
 }
 
-func NewService(primaryApi *currencyexternalapi.CurrencyAPI, secondaryApi *currencyexternalapi.CurrencyAPI) *CurrencyExternalService {
-	return &CurrencyExternalService{primaryApi: primaryApi, secondaryApi: secondaryApi}
+func NewService(primaryApi *currencyexternalapi.CurrencyAPI) *CurrencyExternalService {
+	return &CurrencyExternalService{primaryApi: primaryApi}
 }
 
 func (s *CurrencyExternalService) GetSupportedCurrencies(ctx context.Context) ([]string, error) {
@@ -24,10 +23,7 @@ func (s *CurrencyExternalService) GetSupportedCurrencies(ctx context.Context) ([
 
 	currencyCodes, err = s.primaryApi.GetSupportedCurrencies(ctx)
 	if err != nil {
-		currencyCodes, err = s.secondaryApi.GetSupportedCurrencies(ctx)
-		if err != nil {
-			return nil, err
-		}
+		return nil, err
 	}
 
 	return currencyCodes, nil
@@ -43,12 +39,9 @@ func (s *CurrencyExternalService) Convert(ctx context.Context, fromCode string, 
 		err   error
 	)
 
-	code, units, nanos, err = s.secondaryApi.Convert(ctx, fromCode, fromUnits, fromNanos, to)
+	code, units, nanos, err = s.primaryApi.Convert(ctx, fromCode, fromUnits, fromNanos, to)
 	if err != nil {
-		code, units, nanos, err = s.secondaryApi.Convert(ctx, fromCode, fromUnits, fromNanos, to)
-		if err != nil {
-			return nil, err
-		}
+		return nil, err
 	}
 
 	money.CurrencyCode = &code

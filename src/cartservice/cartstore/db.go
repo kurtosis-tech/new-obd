@@ -3,12 +3,14 @@ package cartstore
 import (
 	"context"
 	"fmt"
+	"net"
+	"time"
+
 	cartservice_rest_types "github.com/kurtosis-tech/new-obd/src/cartservice/api/http_rest/types"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"time"
 )
 
 type Db struct {
@@ -16,13 +18,19 @@ type Db struct {
 }
 
 func NewDb(
+	uri string,
 	host string,
 	username string,
 	password string,
 	name string,
 	port string,
 ) (*Db, error) {
-	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable", host, username, password, name, port)
+	var dsn string
+	if uri != "" {
+		dsn = uri
+	} else {
+		dsn = fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s", host, username, password, name, port)
+	}
 	maxRetries := 5
 	initialBackoff := 1 * time.Second
 	backoffMultiplier := 2.0
@@ -31,6 +39,8 @@ func NewDb(
 	if err != nil {
 		return nil, errors.Wrap(err, fmt.Sprintf("An error occurred opening the connection to the database with dsn %s", dsn))
 	}
+
+	logrus.Info("connected to database")
 
 	if err = db.AutoMigrate(&Item{}); err != nil {
 		return nil, errors.Wrap(err, "An error occurred migrating the database")
@@ -49,7 +59,17 @@ func retryConnect(dsn string, maxRetries int, initialBackoff time.Duration, back
 	backoff := initialBackoff
 
 	for i := 0; i < maxRetries; i++ {
-		// Attempt to execute the operation
+		// Need to change the resolver to resolve all addresses to use ipv4 instead of ipv6
+		net.DefaultResolver = &net.Resolver{
+			PreferGo: true,
+			Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
+				d := net.Dialer{
+					Timeout: time.Millisecond * time.Duration(10000),
+				}
+				return d.DialContext(ctx, "tcp4", address)
+			},
+		}
+		logrus.Infof("Attempting to connecting to datbase with dsn: %v\n", dsn)
 		db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 		if err != nil {
 			logrus.Debugf("An error occurred opening the connection to the database with dsn %s", dsn)
