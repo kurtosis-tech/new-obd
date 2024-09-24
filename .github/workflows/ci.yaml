@@ -78,10 +78,10 @@ jobs:
           nix build ./#containers.x86_64-linux.cartservice.arm64 --no-link --print-out-paths
           nix build ./#containers.x86_64-linux.cartservice.amd64 --no-link --print-out-paths
 
-      - name: Build currencyexternalapi images
+      - name: Build metrics images
         run: |
-          nix build ./#containers.x86_64-linux.currencyexternalapi.arm64 --no-link --print-out-paths
-          nix build ./#containers.x86_64-linux.currencyexternalapi.amd64 --no-link --print-out-paths
+          nix build ./#containers.x86_64-linux.metrics.arm64 --no-link --print-out-paths
+          nix build ./#containers.x86_64-linux.metrics.amd64 --no-link --print-out-paths
 
       - name: Build frontend images
         run: |
@@ -105,13 +105,13 @@ jobs:
           # Set tag to be the branch name and version
           nix develop --command tag-branch-version
           nix run ./#publish-cartservice-container
-          nix run ./#publish-currencyexternalapi-container
+          nix run ./#publish-metrics-container
           nix run ./#publish-frontend-container
           nix run ./#publish-productcatalogservice-container
 
           # Set tag to be the branch name 
           nix develop --command tag-branch
           nix run ./#publish-cartservice-container
-          nix run ./#publish-currencyexternalapi-container
+          nix run ./#publish-metrics-container
           nix run ./#publish-frontend-container
           nix run ./#publish-productcatalogservice-container
