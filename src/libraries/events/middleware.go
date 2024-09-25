@@ -2,6 +2,7 @@ package events
 
 import (
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"net/http"
 	"strings"
 )
@@ -32,7 +33,10 @@ func GetWrapsWithEventsManagerMiddleware(manager *EventsManager) func(next http.
 
 			if manager != nil && shouldTrackURL {
 				eventMsg := fmt.Sprintf("USER: %s VISITED: %s", userId, r.URL)
-				manager.PublishMessage(eventMsg)
+				err := manager.PublishMessage(eventMsg)
+				if err != nil {
+					logrus.Errorf("error publishing the page visit message with events manager: %v", err)
+				}
 			}
 
 			if next != nil && r != nil {
