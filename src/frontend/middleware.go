@@ -23,6 +23,10 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const (
+	ctxKeyUserID = "user-id"
+)
+
 type ctxKeyLog struct{}
 type ctxKeyRequestID struct{}
 
@@ -57,6 +61,7 @@ func (lh *logHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	requestID, _ := uuid.NewRandom()
 	ctx = context.WithValue(ctx, ctxKeyRequestID{}, requestID.String())
+	ctx = context.WithValue(ctx, ctxKeyUserID, userID)
 
 	start := time.Now()
 	rr := &responseRecorder{w: w}

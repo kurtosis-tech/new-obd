@@ -40,8 +40,8 @@
 
         service_names = [
           "cartservice"
-          "currencyexternalapi"
           "frontend"
+          "metrics"
           "productcatalogservice"
         ];
         architectures = ["amd64" "arm64"];
@@ -166,7 +166,7 @@
             inherit pkgs;
           };
 
-          packages.currencyexternalapi = pkgs.callPackage ./src/currencyexternalapi {
+          packages.metrics = pkgs.callPackage ./src/metrics {
             inherit pkgs;
           };
 

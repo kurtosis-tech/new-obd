@@ -1,4 +1,4 @@
-module github.com/kurtosis-tech/new-obd/src/currencyexternalapi
+module github.com/kurtosis-tech/new-obd/src/libraries/currencyexternalapi
 
 go 1.19
 

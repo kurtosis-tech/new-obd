@@ -2,8 +2,8 @@ package currencyexternalapi
 
 import (
 	"context"
-	"github.com/kurtosis-tech/new-obd/src/currencyexternalapi/config/ghgist"
-	"github.com/kurtosis-tech/new-obd/src/currencyexternalapi/config/jsdelivr"
+	"github.com/kurtosis-tech/new-obd/src/libraries/currencyexternalapi/config/ghgist"
+	"github.com/kurtosis-tech/new-obd/src/libraries/currencyexternalapi/config/jsdelivr"
 	"github.com/stretchr/testify/require"
 	"testing"
 )
@@ -28,7 +28,7 @@ func Test(t *testing.T) {
 }
 
 func Test2(t *testing.T) {
-	currencyAPI := NewCurrencyAPI(jsdelivr.JsdelivrAPIConfig)
+	currencyAPI := NewCurrencyAPI(jsdelivr.GetJsdelivrAPIConfig("apiKey"))
 
 	supported, err := currencyAPI.GetSupportedCurrencies(context.Background())
 	require.NoError(t, err)

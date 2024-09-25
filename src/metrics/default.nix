@@ -1,5 +1,5 @@
 {pkgs}: let
-  pname = "currencyexternalapi";
+  pname = "metrics";
 in
   pkgs.buildGoApplication {
     # pname has to match the location (folder) where the main function is or use

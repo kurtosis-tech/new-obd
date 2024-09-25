@@ -1,7 +1,6 @@
-package main
+package tracing
 
 import (
-	"github.com/kurtosis-tech/new-obd/src/frontend/consts"
 	"github.com/sirupsen/logrus"
 	"net/http"
 )
@@ -9,7 +8,7 @@ import (
 func KardinalTracingContextWrapper(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-		traceID := r.Header.Get(consts.KardinalTraceIdHeaderKey)
+		traceID := r.Header.Get(KardinalTraceIdHeaderKey)
 		logrus.Infof("[KARDINAL-DEBUG] Trace ID: %s", traceID)
 
 		if next != nil && r != nil {
