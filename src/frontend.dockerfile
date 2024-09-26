@@ -10,8 +10,8 @@ RUN apk --update --no-cache add ca-certificates make
 # Build Go binary
 COPY ./frontend ./frontend
 COPY ./cartservice ./cartservice
-COPY ./currencyexternalapi ./currencyexternalapi
 COPY ./productcatalogservice ./productcatalogservice
+COPY ./libraries ./libraries
 WORKDIR /go/src/hipstershop/frontend
 
 RUN go env -w GOPROXY=https://goproxy.io,direct/

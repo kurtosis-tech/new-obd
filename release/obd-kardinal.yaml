@@ -129,14 +129,22 @@ spec:
                 - name: "Cookie"
                   value: "shop_session-id=x-liveness-probe"
           env:
-            - name: ADDRESS
-              value: ":8080"
             - name: JSDELIVRAPIKEY
               value: "prod"
             - name: CARTSERVICEHOST
               value: cartservice
             - name: PRODUCTCATALOGSERVICEHOST
               value: productcatalogservice
+            #- name: AWS_REGION
+            #  value: us-east-1
+            #- name: AWS_ACCESS_KEY_ID
+            #  value:
+            #- name: AWS_SECRET_ACCESS_KEY
+            #  value:
+            #- name: QUEUE_URL
+            #  value:
+            #- name: SNS_TOPIC_ARN
+            #  value:
 ---
 apiVersion: v1
 kind: Service
@@ -374,3 +382,77 @@ spec:
                 name: frontend
                 port:
                   number: 80
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: metrics-v1
+  labels:
+    app: metrics
+    version: v1
+spec:
+  selector:
+    matchLabels:
+      app: metrics
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: metrics
+        version: v1
+      annotations:
+        sidecar.istio.io/rewriteAppHTTPProbers: "true"
+    spec:
+      containers:
+        - name: server
+          image: kurtosistech/metrics:main
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8091
+          readinessProbe:
+            initialDelaySeconds: 10
+            httpGet:
+              path: "/_healthz"
+              port: 8091
+              httpHeaders:
+                - name: "Cookie"
+                  value: "shop_session-id=x-readiness-probe"
+          livenessProbe:
+            initialDelaySeconds: 10
+            httpGet:
+              path: "/_healthz"
+              port: 8091
+              httpHeaders:
+                - name: "Cookie"
+                  value: "shop_session-id=x-liveness-probe"
+          #env:
+          #- name: AWS_REGION
+          #  value: us-east-1
+          #- name: AWS_ACCESS_KEY_ID
+          #  value:
+          #- name: AWS_SECRET_ACCESS_KEY
+          #  value:
+          #- name: QUEUE_URL
+          #  value:
+          #- name: SNS_TOPIC_ARN
+          #  value:
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: metrics
+  labels:
+    app: metrics
+    version: v1
+spec:
+  type: ClusterIP
+  selector:
+    app: metrics
+  ports:
+    - name: http
+      port: 8091
+      protocol: TCP
+      appProtocol: HTTP
+      targetPort: 8091

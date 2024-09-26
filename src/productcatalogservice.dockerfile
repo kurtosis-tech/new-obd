@@ -4,19 +4,13 @@ FROM golang:1.21.9-alpine AS builder
 ENV CGO_ENABLED=0 GOOS=linux
 WORKDIR /go/src/hipstershop
 
-# Install dependencies
-RUN apk --update --no-cache add ca-certificates make protoc
-
-
 # Build Go binary
-COPY Makefile go.mod go.sum ./
+COPY ./productcatalogservice ./productcatalogservice
+WORKDIR /go/src/hipstershop/productcatalogservice
 RUN go env -w GOPROXY=https://goproxy.io,direct/
 RUN go mod download
-COPY . .
 
-# Skaffold passes in debug-oriented compiler flags
-ARG SKAFFOLD_GO_GCFLAGS
-RUN go build -gcflags="${SKAFFOLD_GO_GCFLAGS}" -o /go/src/hipstershop/productcatalogservice .
+RUN go build -o /go/src/hipstershop/productcatalogservicebin .
 
 # Deployment container
 FROM scratch
@@ -28,8 +22,8 @@ WORKDIR /hipstershop
 # See https://golang.org/pkg/runtime/
 ENV GOTRACEBACK=single
 
-COPY ./data /hipstershop/data/
+COPY productcatalogservice/data /hipstershop/data/
 COPY --from=builder /etc/ssl/certs /etc/ssl/certs
-COPY --from=builder /go/src/hipstershop/productcatalogservice /hipstershop/productcatalogservice
+COPY --from=builder /go/src/hipstershop/productcatalogservicebin /hipstershop/productcatalogservice
 
 ENTRYPOINT ["/hipstershop/productcatalogservice"]

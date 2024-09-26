@@ -2,7 +2,7 @@ package currencyexternalservice
 
 import (
 	"context"
-	"github.com/kurtosis-tech/new-obd/src/currencyexternalapi"
+	"github.com/kurtosis-tech/new-obd/src/libraries/currencyexternalapi"
 	productcatalogservice_rest_types "github.com/kurtosis-tech/new-obd/src/productcatalogservice/api/http_rest/types"
 )
 
