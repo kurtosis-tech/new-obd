@@ -294,6 +294,10 @@ main {
   }
 }
 
+.home .container-fluid {
+  background-color: #de9580;
+}
+
 .home-mobile-hero-banner {
   height: 200px;
   background: url(/static/images/folded-clothes-on-white-chair-wide.jpg) no-repeat top center;
